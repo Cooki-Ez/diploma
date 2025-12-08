@@ -1,7 +1,8 @@
-package pjatk.diploma.s22673.models;
+package pjatk.diploma.s22673.util;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import pjatk.diploma.s22673.models.EmployeeRole;
 
 import java.util.Arrays;
 import java.util.EnumSet;

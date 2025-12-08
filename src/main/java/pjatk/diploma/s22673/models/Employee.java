@@ -6,6 +6,7 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import pjatk.diploma.s22673.util.RoleConverter;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -74,6 +75,10 @@ public class Employee {
     @OneToMany(mappedBy = "employee")
     @JsonIgnore
     private List<LeaveEvaluation>  leaveEvaluations;
+
+    @ManyToMany(mappedBy = "employees")
+    @JsonIgnore
+    private List<Project> projects;
 
     public Employee(String name, String surname, double salary, EnumSet<EmployeeRole> roles) {
         this.name = name;

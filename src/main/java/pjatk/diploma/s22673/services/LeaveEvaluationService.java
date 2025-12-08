@@ -10,6 +10,8 @@ import pjatk.diploma.s22673.models.LeaveEvaluation;
 import pjatk.diploma.s22673.repositories.LeaveEvaluationRepository;
 import pjatk.diploma.s22673.repositories.LeaveRequestRepository;
 
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -28,9 +30,12 @@ public class LeaveEvaluationService {
         this.employeeService = employeeService;
     }
 
-    public void evaluateRequest(LeaveRequest leaveRequest, LeaveRequestStatus status) {
-        leaveRequest.setStatus(status);
+    // TODO
+    public void evaluateRequest(LeaveRequest leaveRequest, String comment) {
+        leaveRequest.setStatus(leaveRequest.getStatus());
         LeaveEvaluation leaveEvaluation = new LeaveEvaluation();
+        leaveEvaluation.setComment(comment);
+        leaveEvaluation.setDateOfDecision(Timestamp.valueOf(String.valueOf(LocalDate.now())));
     }
     
     public List<LeaveEvaluation> findAll() {
