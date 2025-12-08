@@ -5,5 +5,6 @@ public enum LeaveRequestStatus {
     APPROVED,
     CANCELLED,
     DECLINED,
-    DECLINED_S // declined by system
+    DECLINED_S, // declined by system
+    MANUAL // requires manual review
 }

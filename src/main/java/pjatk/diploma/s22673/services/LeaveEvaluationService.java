@@ -71,17 +71,102 @@ public class LeaveEvaluationService {
         for (LeaveRequest leaveRequest : leaveRequests) {
             int daysRequested = calculateDays(leaveRequest);
             Employee employee = leaveRequest.getEmployee();
-            if(employee.getPoints() < daysRequested)
+            if(employee.getPoints() < daysRequested) {
                 leaveRequest.setStatus(LeaveRequestStatus.DECLINED_S);
-            else {
-                leaveRequest.setStatus(LeaveRequestStatus.APPROVED);
-                employee.setPoints(employee.getPoints() - daysRequested);
-                employeeService.save(employee, employee.getId());
+            } else {
+                LeaveRequestStatus status = evaluateProjectConstraints(employee, leaveRequest);
+                if (status == LeaveRequestStatus.APPROVED) {
+                    employee.setPoints(employee.getPoints() - daysRequested);
+                    employeeService.save(employee, employee.getId());
+                }
+                leaveRequest.setStatus(status);
             }
             leaveRequestService.save(leaveRequest, leaveRequest.getId());
+        }
+    }
 
+    /**
+     * Evaluates project constraints to determine if leave request requires manual review.
+     * Returns MANUAL status if project is CRUCIAL, deadline is within 2 weeks,
+     * or if project is IMPORTANT and 70%+ employees already have overlapping leave.
+     */
+    private LeaveRequestStatus evaluateProjectConstraints(Employee employee, LeaveRequest leaveRequest) {
+        List<Project> projects = employee.getProjects();
+        if (projects == null || projects.isEmpty()) {
+            return LeaveRequestStatus.APPROVED;
         }
 
+        LocalDate leaveStart = leaveRequest.getStartDate().toLocalDateTime().toLocalDate();
+        LocalDate leaveEnd = leaveRequest.getEndDate().toLocalDateTime().toLocalDate();
+        LocalDate twoWeeksFromNow = LocalDate.now().plusWeeks(2);
+
+        for (Project project : projects) {
+            if (project.getEndDate() == null) {
+                continue;
+            }
+
+            LocalDate projectDeadline = project.getEndDate().toLocalDateTime().toLocalDate();
+            boolean deadlineWithinTwoWeeks = !projectDeadline.isAfter(twoWeeksFromNow);
+
+            if (project.getImportance() == Importance.CRUCIAL) {
+                return LeaveRequestStatus.MANUAL;
+            }
+
+            if (deadlineWithinTwoWeeks) {
+                return LeaveRequestStatus.MANUAL;
+            }
+
+            if (project.getImportance() == Importance.IMPORTANT) {
+                if (!checkEmployeeAvailability(project, leaveStart, leaveEnd)) {
+                    return LeaveRequestStatus.MANUAL;
+                }
+            }
+        }
+
+        return LeaveRequestStatus.APPROVED;
+    }
+
+    /**
+     * Checks if at least 70% of project employees are available (not on leave) during the given dates.
+     * Returns true if at least 70% are available, false otherwise.
+     */
+    private boolean checkEmployeeAvailability(Project project, LocalDate leaveStart, LocalDate leaveEnd) {
+        List<Employee> projectEmployees = project.getEmployees();
+        if (projectEmployees == null || projectEmployees.isEmpty()) {
+            return true;
+        }
+
+        int totalEmployees = projectEmployees.size();
+        int employeesOnLeave = 0;
+
+        for (Employee emp : projectEmployees) {
+            List<LeaveRequest> empLeaveRequests = emp.getLeaveRequests();
+            if (empLeaveRequests == null) {
+                continue;
+            }
+
+            for (LeaveRequest lr : empLeaveRequests) {
+                if (lr.getStatus() == LeaveRequestStatus.APPROVED) {
+                    LocalDate lrStart = lr.getStartDate().toLocalDateTime().toLocalDate();
+                    LocalDate lrEnd = lr.getEndDate().toLocalDateTime().toLocalDate();
+
+                    if (datesOverlap(leaveStart, leaveEnd, lrStart, lrEnd)) {
+                        employeesOnLeave++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        double percentageAvailable = (double) (totalEmployees - employeesOnLeave) / totalEmployees * 100;
+        return percentageAvailable >= 70;
+    }
+
+    /**
+     * Checks if two date ranges overlap.
+     */
+    private boolean datesOverlap(LocalDate start1, LocalDate end1, LocalDate start2, LocalDate end2) {
+        return !start1.isAfter(end2) && !start2.isAfter(end1);
     }
 
     private int calculateDays(LeaveRequest leaveRequest) {
