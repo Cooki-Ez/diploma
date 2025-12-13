@@ -85,11 +85,11 @@ public class LeaveEvaluationService {
         }
     }
 
-    /**
+/**
      * Evaluates project constraints to determine if leave request requires manual review.
      * Returns MANUAL status if project is CRUCIAL, deadline is within 2 weeks,
      * or if project is IMPORTANT and 70%+ employees already have overlapping leave.
-     */
+     */    
     private LeaveRequestStatus evaluateProjectConstraints(Employee employee, LeaveRequest leaveRequest) {
         List<Project> projects = employee.getProjects();
         if (projects == null || projects.isEmpty()) {
@@ -126,7 +126,7 @@ public class LeaveEvaluationService {
         return LeaveRequestStatus.APPROVED;
     }
 
-    /**
+   /**
      * Checks if at least 70% of project employees are available (not on leave) during the given dates.
      * Returns true if at least 70% are available, false otherwise.
      */
@@ -158,11 +158,11 @@ public class LeaveEvaluationService {
             }
         }
 
-        double percentageAvailable = (double) (totalEmployees - employeesOnLeave) / totalEmployees * 100;
-        return percentageAvailable >= 70;
+        double percentageOnLeave = (double) employeesOnLeave / totalEmployees * 100;
+        return percentageOnLeave < 70;
     }
 
-    /**
+/**
      * Checks if two date ranges overlap.
      */
     private boolean datesOverlap(LocalDate start1, LocalDate end1, LocalDate start2, LocalDate end2) {
