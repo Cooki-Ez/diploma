@@ -27,10 +27,15 @@ public class EmployeeDTO {
     @NotEmpty(message = "Password cannot be empty")
     @Size(min = 8, max = 30, message = "Password must be between 8 and 30 characters")
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$",
-             message = "Password must contain at least one digit, one lowercase letter, one uppercase letter, one special character, and no whitespace")
+             message = "Password must contain at least one digit, one lowercase letter, one uppercase letter,
+            one special character, and no whitespace")
     private String password;
 
     @NotNull
+    @Pattern(
+    regexp = "^(0[1-9]|[12][0-9]|3[01])([./])(0[1-9]|1[0-2])\\2(\\d{4})$",
+    message = "Date of birth must be in format dd.MM.yyyy or dd/MM/yyyy"
+    )
     private LocalDate dateOfBirth;
 
     public String getName() {
