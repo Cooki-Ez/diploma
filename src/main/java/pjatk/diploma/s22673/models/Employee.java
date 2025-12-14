@@ -28,12 +28,14 @@ public class Employee {
     @NotNull(message = "Name cannot be empty")
     @NotEmpty(message = "Name cannot be empty")
     @Size(max = 30, message = "Name cannot be longer than 30 characters")
+    @Pattern(regexp = "^[A-Za-z]+$", message = "Name must contain only letters")
     private String name;
 
     @Column(name = "surname")
     @NotNull(message = "Surname cannot be empty")
     @NotEmpty(message = "Surname cannot be empty")
     @Size(max = 30, message = "Surname cannot be longer than 30 characters")
+    @Pattern(regexp = "^[A-Za-z]+$", message = "Surname must contain only letters")
     private String surname;
 
     @Column(name = "email", unique = true, nullable = false)
