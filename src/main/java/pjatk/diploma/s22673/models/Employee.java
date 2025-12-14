@@ -45,6 +45,10 @@ public class Employee {
     @Size(max = 100, message = "Email should be less than 100 characters")
     private String Email;
 
+    @Column(name = "password")
+    @NotEmpty
+    private String password;
+
     @Column(name = "salary")
     @NotNull(message = "Salary cannot be empty")
     @DecimalMin(value = "500", message = "Salary cannot be lower than 500PLN")
@@ -82,10 +86,11 @@ public class Employee {
     @JsonIgnore
     private List<Project> projects;
 
-    public Employee(String name, String surname, double salary, EnumSet<EmployeeRole> roles) {
+    public Employee(String name, String surname, String email, LocalDate dateOfBirth, EnumSet<EmployeeRole> roles) {
         this.name = name;
         this.surname = surname;
-        this.salary = salary;
+        Email = email;
+        this.dateOfBirth = dateOfBirth;
         this.roles = roles;
     }
 
