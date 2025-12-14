@@ -46,18 +46,26 @@ public class Employee {
     private String Email;
 
     @Column(name = "password")
-    @NotEmpty
+    @NotEmpty(message = "Password cannot be empty")
+    @Size(min = 8, max = 30, message = "Password must be between 8 and 30 characters")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$",
+             message = "Password must contain at least one digit, one lowercase letter, one uppercase letter, one special character, and no whitespace")
     private String password;
+
+    @Column(name = "date_of_birth")
+    @NotNull
+    @Pattern(
+    regexp = "^(0[1-9]|[12][0-9]|3[01])([./])(0[1-9]|1[0-2])\\2(\\d{4})$",
+    message = "Date of birth must be in format dd.MM.yyyy or dd/MM/yyyy"
+    )
+    private LocalDate dateOfBirth;
+
 
     @Column(name = "salary")
     @NotNull(message = "Salary cannot be empty")
     @DecimalMin(value = "500", message = "Salary cannot be lower than 500PLN")
     private double salary;
     private int age;
-
-    @Column(name = "date_of_birth")
-    @NotNull
-    private LocalDate dateOfBirth;
 
     @Column(name = "points")
     @NotNull
@@ -86,11 +94,10 @@ public class Employee {
     @JsonIgnore
     private List<Project> projects;
 
-    public Employee(String name, String surname, String email, LocalDate dateOfBirth, EnumSet<EmployeeRole> roles) {
+    public Employee(String name, String surname, double salary, EnumSet<EmployeeRole> roles) {
         this.name = name;
         this.surname = surname;
-        Email = email;
-        this.dateOfBirth = dateOfBirth;
+        this.salary = salary;
         this.roles = roles;
     }
 

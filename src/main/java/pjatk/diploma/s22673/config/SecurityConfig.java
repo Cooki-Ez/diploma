@@ -51,24 +51,25 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(HttpMethod.DELETE).hasRole("ADMIN")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/reviews/**", "/orders/**", "/genres/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/books/**").hasAnyRole("LIBRARIAN", "ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/reservations/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/auth/login", "/auth/registration").permitAll()
+                        // Employee endpoints - POST, PATCH, DELETE require MANAGER or ADMIN
+                        .requestMatchers(HttpMethod.POST, "/employees/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/employees/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/employees/**").hasAnyRole("MANAGER", "ADMIN")
+                        // Project endpoints - POST, PATCH, DELETE require MANAGER or ADMIN
+                        .requestMatchers(HttpMethod.POST, "/projects/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/projects/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/projects/**").hasAnyRole("MANAGER", "ADMIN")
+                        // Department endpoints - POST, PATCH, DELETE require MANAGER or ADMIN
+                        .requestMatchers(HttpMethod.POST, "/departments/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/departments/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/departments/**").hasAnyRole("MANAGER", "ADMIN")
+                        // LeaveRequest endpoints - POST allowed for all authenticated users, PATCH, DELETE require MANAGER or ADMIN
+                        .requestMatchers(HttpMethod.POST, "/leaves/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/leaves/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/leaves/**").hasAnyRole("MANAGER", "ADMIN")
+                        // All other requests require authentication
                         .anyRequest().authenticated()
-                )
-                .formLogin(f -> f
-                        .loginPage("/auth/login")
-                        .loginProcessingUrl("/process_login")
-                        .defaultSuccessUrl("/index", true)
-                        .failureUrl("/auth/login?error=true")
-                )
-                .logout(l -> l
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/auth/login")
-                        .permitAll()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

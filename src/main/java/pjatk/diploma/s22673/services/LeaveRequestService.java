@@ -4,25 +4,44 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pjatk.diploma.s22673.exceptions.LeaveRequestDoesNotExistException;
+import pjatk.diploma.s22673.models.Employee;
+import pjatk.diploma.s22673.models.EmployeeRole;
 import pjatk.diploma.s22673.models.LeaveRequest;
 import pjatk.diploma.s22673.models.LeaveRequestStatus;
 import pjatk.diploma.s22673.repositories.LeaveRequestRepository;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
 public class LeaveRequestService {
     private final LeaveRequestRepository leaveRequestRepository;
+    private final EmployeeService employeeService;
+
+    private static final List<LeaveRequestStatus> RESOLVED_STATUSES = Arrays.asList(
+            LeaveRequestStatus.APPROVED,
+            LeaveRequestStatus.CANCELLED,
+            LeaveRequestStatus.DECLINED,
+            LeaveRequestStatus.DECLINED_S
+    );
 
     @Autowired
-    public LeaveRequestService(LeaveRequestRepository leaveRequestRepository) {
+    public LeaveRequestService(LeaveRequestRepository leaveRequestRepository, EmployeeService employeeService) {
         this.leaveRequestRepository = leaveRequestRepository;
+        this.employeeService = employeeService;
     }
 
     public List<LeaveRequest> findAll() {
-        return leaveRequestRepository.findAll();
+        Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
+
+        if (currentEmployee.getRoles().contains(EmployeeRole.ADMIN)) {
+            return leaveRequestRepository.findAll();
+        } else if (currentEmployee.getRoles().contains(EmployeeRole.MANAGER)) {
+            return leaveRequestRepository.findByEmployeeDepartment(currentEmployee.getDepartment());
+        } else {
+            return leaveRequestRepository.findByEmployee(currentEmployee);
+        }
     }
 
     public LeaveRequest findOne(int id){
@@ -34,6 +53,10 @@ public class LeaveRequestService {
 
     @Transactional
     public LeaveRequest save(LeaveRequest leaveRequest) {
+        // Set status to PENDING if not already set
+        if (leaveRequest.getStatus() == null) {
+            leaveRequest.setStatus(LeaveRequestStatus.PENDING);
+        }
         return leaveRequestRepository.save(leaveRequest);
     }
 
@@ -50,5 +73,19 @@ public class LeaveRequestService {
 
     public List<LeaveRequest> findByStatus(LeaveRequestStatus status) {
         return leaveRequestRepository.findByStatus(status);
+    }
+
+    public List<LeaveRequest> findResolvedRequests() {
+        Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
+
+        if (currentEmployee.getRoles().contains(EmployeeRole.ADMIN)) {
+            return leaveRequestRepository.findByStatusInOrderByEndDateDesc(RESOLVED_STATUSES);
+        } else if (currentEmployee.getRoles().contains(EmployeeRole.MANAGER)) {
+            return leaveRequestRepository.findByEmployeeDepartmentAndStatusInOrderByEndDateDesc(
+                    currentEmployee.getDepartment(), RESOLVED_STATUSES);
+        } else {
+            return leaveRequestRepository.findByEmployeeAndStatusInOrderByEndDateDesc(
+                    currentEmployee, RESOLVED_STATUSES);
+        }
     }
 }

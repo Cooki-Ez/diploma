@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pjatk.diploma.s22673.exceptions.DepartmentCannotBeEmptyWhenCreatingAnEmployee;
@@ -15,17 +16,36 @@ import pjatk.diploma.s22673.security.PersonDetails;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional(readOnly = true)
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final DepartmentService departmentService;
+    private final PasswordEncoder passwordEncoder;
+
+    // Password pattern: at least one digit, one lowercase, one uppercase, one special character, no whitespace, 8-30 chars
+    private static final String PASSWORD_PATTERN = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$";
+    private static final Pattern pattern = Pattern.compile(PASSWORD_PATTERN);
 
     @Autowired
-    public EmployeeService(EmployeeRepository employeeRepository, DepartmentService departmentService) {
+    public EmployeeService(EmployeeRepository employeeRepository, DepartmentService departmentService, PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
         this.departmentService = departmentService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    private void validatePassword(String password) {
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be empty");
+        }
+        if (password.length() < 8 || password.length() > 30) {
+            throw new IllegalArgumentException("Password must be between 8 and 30 characters");
+        }
+        if (!pattern.matcher(password).matches()) {
+            throw new IllegalArgumentException("Password must contain at least one digit, one lowercase letter, one uppercase letter, one special character, and no whitespace");
+        }
     }
 
     public Employee getCurrentLoggedInEmployee() {
@@ -44,16 +64,31 @@ public class EmployeeService {
 
     @Transactional
     public void save(Employee employee) {
-        Department department = employee.getDepartment();
-
-        if (department == null || departmentService.findById(department.getId()) == null || departmentService.findByName(department.getName()) == null)
-            throw new DepartmentCannotBeEmptyWhenCreatingAnEmployee("Department must be assigned to that employee");
+        // Get the current logged-in employee and assign their department to the new employee
+        Employee currentLoggedInEmployee = getCurrentLoggedInEmployee();
+        Department department = currentLoggedInEmployee.getDepartment();
+        
+        // Set the department for the new employee
+        employee.setDepartment(department);
+        
+        // Validate and encrypt password before saving
+        if (employee.getPassword() != null && !employee.getPassword().isEmpty()) {
+            validatePassword(employee.getPassword());
+            employee.setPassword(passwordEncoder.encode(employee.getPassword()));
+        }
+        
         employeeRepository.save(employee);
     }
 
     @Transactional
     public void save(Employee employee, int id) {
         employee.setId(id);
+        
+        // Encrypt password before saving if it's provided
+        if (employee.getPassword() != null && !employee.getPassword().isEmpty()) {
+            employee.setPassword(passwordEncoder.encode(employee.getPassword()));
+        }
+        
         employeeRepository.save(employee);
     }
 

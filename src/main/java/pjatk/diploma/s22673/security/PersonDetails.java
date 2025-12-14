@@ -22,7 +22,7 @@ public class PersonDetails implements UserDetails {
         return employee.getRoles()
                 .stream()
                 .map(r ->
-                        new SimpleGrantedAuthority(String.valueOf(r))
+                        new SimpleGrantedAuthority("ROLE_" + r.name())
                 )
                 .toList();
     }
