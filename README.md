@@ -2,16 +2,6 @@
 
 A web application for managing employees, departments, projects, and leave requests using Java Spring Boot and PostgreSQL.
 
-## Architecture
-
-For ease of accessibility the platform was decided to be a web application. The backend has been implemented with Java and Spring Boot, which is a widely-used framework for building enterprise applications. The frontend has been implemented with Thymeleaf, a modern server-side Java template engine. Database of choice is PostgreSQL.
-
-As mentioned before, the focus was put into accessibility and ease of development of the platform. Therefore, all of the crucial parts - backend and database has been containerized using Docker. Docker allows for packaging and running applications regardless of the host environment.
-
-By creating isolated environments for the application developers can run them on any device without the need to set the environment up manually. As Docker comes with a wide variety of so-called images - packages that can be downloaded into an isolated docker system, it is very easy to set up such a reusable system with a single script.
-
-Using Docker, the author prepared scripts with such dedicated environments that can be reused by developers and ultimately ease both the development process and developer collaboration. During the initialization of the platform it is sufficient to run a single startup.sh script to start all services.
-
 ## Quick Start
 
 ### Prerequisites
