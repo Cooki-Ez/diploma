@@ -31,7 +31,7 @@ public class DepartmentController {
     public ResponseEntity<List<DepartmentDTO>> getAll() {
         List<Department> departments = departmentService.findAll();
         List<DepartmentDTO> departmentDTOs = departments.stream()
-                .map(department -> modelMapper.map(department, DepartmentDTO.class))
+                .map(this::convertToDepartmentDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(departmentDTOs);
     }
@@ -39,7 +39,7 @@ public class DepartmentController {
     @GetMapping("/{id}")
     public ResponseEntity<DepartmentDTO> getById(@PathVariable("id") int id) {
         Department department = departmentService.findById(id);
-        return ResponseEntity.ok(modelMapper.map(department, DepartmentDTO.class));
+        return ResponseEntity.ok(convertToDepartmentDTO(department));
     }
 
     @PostMapping
@@ -47,9 +47,9 @@ public class DepartmentController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage());
         }
-        Department department = modelMapper.map(departmentDTO, Department.class);
+        Department department = convertToDepartment(departmentDTO);
         Department savedDepartment = departmentService.save(department);
-        return ResponseEntity.status(HttpStatus.CREATED).body(modelMapper.map(savedDepartment, DepartmentDTO.class));
+        return ResponseEntity.status(HttpStatus.CREATED).body(convertToDepartmentDTO(savedDepartment));
     }
 
     @PatchMapping("/{id}")
@@ -57,15 +57,24 @@ public class DepartmentController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage());
         }
-        Department department = modelMapper.map(departmentDTO, Department.class);
+        Department department = convertToDepartment(departmentDTO);
         Department updatedDepartment = departmentService.save(department, id);
-        return ResponseEntity.ok(modelMapper.map(updatedDepartment, DepartmentDTO.class));
+        return ResponseEntity.ok(convertToDepartmentDTO(updatedDepartment));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> delete(@PathVariable("id") int id) {
         departmentService.delete(id);
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    // Model mapper helper methods
+    private DepartmentDTO convertToDepartmentDTO(Department department) {
+        return modelMapper.map(department, DepartmentDTO.class);
+    }
+
+    private Department convertToDepartment(DepartmentDTO departmentDTO) {
+        return modelMapper.map(departmentDTO, Department.class);
     }
 
 }

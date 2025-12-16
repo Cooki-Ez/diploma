@@ -69,6 +69,13 @@ public class LeaveEvaluationService {
     void evaluateRequests() {
         List<LeaveRequest> leaveRequests = leaveRequestService.findByStatus(LeaveRequestStatus.PENDING);
         for (LeaveRequest leaveRequest : leaveRequests) {
+            // Skip requests that don't use points
+            if (!leaveRequest.isUsePoints()) {
+                leaveRequest.setStatus(LeaveRequestStatus.MANUAL);
+                leaveRequestService.save(leaveRequest, leaveRequest.getId());
+                continue;
+            }
+            
             int daysRequested = calculateDays(leaveRequest);
             Employee employee = leaveRequest.getEmployee();
             if(employee.getPoints() < daysRequested) {
@@ -132,18 +139,16 @@ public class LeaveEvaluationService {
      */
     private boolean checkEmployeeAvailability(Project project, LocalDate leaveStart, LocalDate leaveEnd) {
         List<Employee> projectEmployees = project.getEmployees();
-        if (projectEmployees == null || projectEmployees.isEmpty()) {
+        if (projectEmployees == null || projectEmployees.isEmpty()) 
             return true;
-        }
 
         int totalEmployees = projectEmployees.size();
         int employeesOnLeave = 0;
 
         for (Employee emp : projectEmployees) {
             List<LeaveRequest> empLeaveRequests = emp.getLeaveRequests();
-            if (empLeaveRequests == null) {
+            if (empLeaveRequests == null) 
                 continue;
-            }
 
             for (LeaveRequest lr : empLeaveRequests) {
                 if (lr.getStatus() == LeaveRequestStatus.APPROVED) {

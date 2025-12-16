@@ -34,7 +34,7 @@ public class ProjectController {
     public ResponseEntity<List<ProjectDTO>> getAll() {
         List<Project> projects = projectService.findAll();
         List<ProjectDTO> projectDTOs = projects.stream()
-                .map(project -> modelMapper.map(project, ProjectDTO.class))
+                .map(this::convertToProjectDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(projectDTOs);
     }
@@ -42,7 +42,7 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDTO> getById(@PathVariable("id") int id) {
         Project project = projectService.findById(id);
-        return ResponseEntity.ok(modelMapper.map(project, ProjectDTO.class));
+        return ResponseEntity.ok(convertToProjectDTO(project));
     }
 
     @PostMapping
@@ -50,14 +50,14 @@ public class ProjectController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage());
         }
-        Project project = modelMapper.map(projectDTO, Project.class);
+        Project project = convertToProject(projectDTO);
         // Handle employee IDs if provided
         if (projectDTO.getEmployeeIds() != null && !projectDTO.getEmployeeIds().isEmpty()) {
             // This would need additional implementation to set employees
             // For now, we'll skip this part as it requires more complex logic
         }
         Project savedProject = projectService.save(project);
-        return ResponseEntity.status(HttpStatus.CREATED).body(modelMapper.map(savedProject, ProjectDTO.class));
+        return ResponseEntity.status(HttpStatus.CREATED).body(convertToProjectDTO(savedProject));
     }
 
     @PatchMapping("/{id}")
@@ -65,19 +65,28 @@ public class ProjectController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage());
         }
-        Project project = modelMapper.map(projectDTO, Project.class);
+        Project project = convertToProject(projectDTO);
         // Handle employee IDs if provided
         if (projectDTO.getEmployeeIds() != null && !projectDTO.getEmployeeIds().isEmpty()) {
             // This would need additional implementation to set employees
             // For now, we'll skip this part as it requires more complex logic
         }
         Project updatedProject = projectService.save(project, id);
-        return ResponseEntity.ok(modelMapper.map(updatedProject, ProjectDTO.class));
+        return ResponseEntity.ok(convertToProjectDTO(updatedProject));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> delete(@PathVariable("id") int id) {
         projectService.delete(id);
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    // Model mapper helper methods
+    private ProjectDTO convertToProjectDTO(Project project) {
+        return modelMapper.map(project, ProjectDTO.class);
+    }
+
+    private Project convertToProject(ProjectDTO projectDTO) {
+        return modelMapper.map(projectDTO, Project.class);
     }
 }

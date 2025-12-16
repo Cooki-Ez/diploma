@@ -32,7 +32,7 @@ public class LeaveRequestController {
     public ResponseEntity<List<LeaveRequestDTO>> findAll() {
         List<LeaveRequest> leaveRequests = leaveRequestService.findAll();
         List<LeaveRequestDTO> leaveRequestDTOs = leaveRequests.stream()
-                .map(request -> modelMapper.map(request, LeaveRequestDTO.class))
+                .map(this::convertToLeaveRequestDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(leaveRequestDTOs);
     }
@@ -40,28 +40,25 @@ public class LeaveRequestController {
     @GetMapping("/{id}")
     public ResponseEntity<LeaveRequestDTO> findById(@PathVariable("id") int id) {
         LeaveRequest leaveRequest = leaveRequestService.findOne(id);
-        return ResponseEntity.ok(modelMapper.map(leaveRequest, LeaveRequestDTO.class));
+        return ResponseEntity.ok(convertToLeaveRequestDTO(leaveRequest));
     }
 
     @PostMapping
     public ResponseEntity<LeaveRequestDTO> create(@RequestBody LeaveRequestDTO leaveRequestDTO) {
-        // Convert DTO to entity
-        LeaveRequest leaveRequest = modelMapper.map(leaveRequestDTO, LeaveRequest.class);
+        LeaveRequest leaveRequest = convertToLeaveRequest(leaveRequestDTO);
         
-        // Set the current logged-in employee as the requester
         Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
         leaveRequest.setEmployee(currentEmployee);
         
-        // Save and convert back to DTO
         LeaveRequest savedRequest = leaveRequestService.save(leaveRequest);
-        return ResponseEntity.ok(modelMapper.map(savedRequest, LeaveRequestDTO.class));
+        return ResponseEntity.ok(convertToLeaveRequestDTO(savedRequest));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<LeaveRequestDTO> update(@PathVariable("id") int id, @RequestBody LeaveRequestDTO leaveRequestDTO) {
-        LeaveRequest leaveRequest = modelMapper.map(leaveRequestDTO, LeaveRequest.class);
+        LeaveRequest leaveRequest = convertToLeaveRequest(leaveRequestDTO);
         LeaveRequest updatedRequest = leaveRequestService.save(leaveRequest, id);
-        return ResponseEntity.ok(modelMapper.map(updatedRequest, LeaveRequestDTO.class));
+        return ResponseEntity.ok(convertToLeaveRequestDTO(updatedRequest));
     }
 
     @DeleteMapping("/{id}")
@@ -74,9 +71,17 @@ public class LeaveRequestController {
     public ResponseEntity<List<LeaveRequestDTO>> getResolvedRequests() {
         List<LeaveRequest> resolvedRequests = leaveRequestService.findResolvedRequests();
         List<LeaveRequestDTO> resolvedRequestDTOs = resolvedRequests.stream()
-                .map(request -> modelMapper.map(request, LeaveRequestDTO.class))
+                .map(this::convertToLeaveRequestDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(resolvedRequestDTOs);
     }
 
+    // Model mapper helper methods
+    private LeaveRequestDTO convertToLeaveRequestDTO(LeaveRequest leaveRequest) {
+        return modelMapper.map(leaveRequest, LeaveRequestDTO.class);
+    }
+
+    private LeaveRequest convertToLeaveRequest(LeaveRequestDTO leaveRequestDTO) {
+        return modelMapper.map(leaveRequestDTO, LeaveRequest.class);
+    }
 }

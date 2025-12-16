@@ -31,14 +31,14 @@ public class EmployeeController {
     public List<EmployeeDTO> getEmployees() {
         List<Employee> employees = employeeService.findAll();
         return employees.stream()
-                .map(employee -> modelMapper.map(employee, EmployeeDTO.class))
+                .map(this::convertToEmployeeDTO)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDTO> getEmployee(@PathVariable("id") int id) {
         Employee employee = employeeService.findOne(id);
-        return ResponseEntity.ok(modelMapper.map(employee, EmployeeDTO.class));
+        return ResponseEntity.ok(convertToEmployeeDTO(employee));
     }
 
     //@GetMapping("/new")
@@ -49,7 +49,7 @@ public class EmployeeController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage());
         }
-        Employee employee = modelMapper.map(employeeDTO, Employee.class);
+        Employee employee = convertToEmployee(employeeDTO);
         employeeService.save(employee);
         return ResponseEntity.ok(HttpStatus.OK);
     }
@@ -59,7 +59,7 @@ public class EmployeeController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage());
         }
-        Employee employee = modelMapper.map(employeeDTO, Employee.class);
+        Employee employee = convertToEmployee(employeeDTO);
         employeeService.save(employee, id);
         return ResponseEntity.ok(HttpStatus.OK);
     }
@@ -68,6 +68,21 @@ public class EmployeeController {
     public ResponseEntity<HttpStatus> delete(@PathVariable("id") int id) {
         employeeService.delete(id);
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/add-points")
+    public ResponseEntity<?> addPoints(@PathVariable("id") int id, @RequestParam("points") int points) {
+        employeeService.addPoints(id, points);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    // Model mapper helper methods
+    private EmployeeDTO convertToEmployeeDTO(Employee employee) {
+        return modelMapper.map(employee, EmployeeDTO.class);
+    }
+
+    private Employee convertToEmployee(EmployeeDTO employeeDTO) {
+        return modelMapper.map(employeeDTO, Employee.class);
     }
 
 }

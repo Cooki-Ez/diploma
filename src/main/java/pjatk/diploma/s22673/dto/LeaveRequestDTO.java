@@ -19,6 +19,7 @@ public class LeaveRequestDTO {
     private String comment;
 
     private LeaveRequestStatus status;
+    private boolean usePoints = true; // Default to true for backward compatibility
     private int employeeId;
     private int managerId;
     private int leaveEvaluationId;
@@ -61,6 +62,14 @@ public class LeaveRequestDTO {
 
     public void setStatus(LeaveRequestStatus status) {
         this.status = status;
+    }
+
+    public boolean isUsePoints() {
+        return usePoints;
+    }
+
+    public void setUsePoints(boolean usePoints) {
+        this.usePoints = usePoints;
     }
 
     public int getEmployeeId() {

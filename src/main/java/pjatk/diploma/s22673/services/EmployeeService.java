@@ -68,7 +68,6 @@ public class EmployeeService {
         Employee currentLoggedInEmployee = getCurrentLoggedInEmployee();
         Department department = currentLoggedInEmployee.getDepartment();
         
-        // Set the department for the new employee
         employee.setDepartment(department);
         
         // Validate and encrypt password before saving
@@ -112,5 +111,12 @@ public class EmployeeService {
             employee.setPoints(employee.getPoints() + 1);
             employeeRepository.save(employee);
         }
+    }
+
+    @Transactional
+    public void addPoints(int employeeId, int points) {
+        Employee employee = findOne(employeeId);
+        employee.setPoints(employee.getPoints() + points);
+        employeeRepository.save(employee);
     }
 }

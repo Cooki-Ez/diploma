@@ -24,11 +24,7 @@ public class EmployeeDTO {
     @Size(max = 100, message = "Email should be less than 100 characters")
     private String Email;
 
-    @NotEmpty(message = "Password cannot be empty")
-    @Size(min = 8, max = 30, message = "Password must be between 8 and 30 characters")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$",
-             message = "Password must contain at least one digit, one lowercase letter, one uppercase letter,
-            one special character, and no whitespace")
+    @NotNull
     private String password;
 
     @NotNull
@@ -37,6 +33,8 @@ public class EmployeeDTO {
     message = "Date of birth must be in format dd.MM.yyyy or dd/MM/yyyy"
     )
     private LocalDate dateOfBirth;
+
+    private int points;
 
     public String getName() {
         return name;
@@ -76,5 +74,13 @@ public class EmployeeDTO {
 
     public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
     }
 }

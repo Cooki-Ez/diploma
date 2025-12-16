@@ -39,6 +39,9 @@ public class LeaveRequest {
     @Enumerated(EnumType.STRING)
     private LeaveRequestStatus status;
 
+    @Column(name = "use_points")
+    private boolean usePoints = true; // Default to true for backward compatibility
+
     @ManyToOne
     @JoinColumn(name = "employee_id")
     @JsonIgnore

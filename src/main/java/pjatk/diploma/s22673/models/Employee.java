@@ -45,11 +45,7 @@ public class Employee {
     @Size(max = 100, message = "Email should be less than 100 characters")
     private String Email;
 
-    @Column(name = "password")
-    @NotEmpty(message = "Password cannot be empty")
-    @Size(min = 8, max = 30, message = "Password must be between 8 and 30 characters")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$",
-             message = "Password must contain at least one digit, one lowercase letter, one uppercase letter, one special character, and no whitespace")
+    @Column(name = "password", nullable = false)
     private String password;
 
     @Column(name = "date_of_birth")
@@ -68,6 +64,7 @@ public class Employee {
     private int age;
 
     @Column(name = "points")
+    @DecimalMin(value = "0")
     @NotNull
     private int points;
 
