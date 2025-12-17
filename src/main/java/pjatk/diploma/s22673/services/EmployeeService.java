@@ -64,13 +64,11 @@ public class EmployeeService {
 
     @Transactional
     public void save(Employee employee) {
-        // Get the current logged-in employee and assign their department to the new employee
         Employee currentLoggedInEmployee = getCurrentLoggedInEmployee();
         Department department = currentLoggedInEmployee.getDepartment();
         
         employee.setDepartment(department);
         
-        // Validate and encrypt password before saving
         if (employee.getPassword() != null && !employee.getPassword().isEmpty()) {
             validatePassword(employee.getPassword());
             employee.setPassword(passwordEncoder.encode(employee.getPassword()));
