@@ -31,7 +31,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
 
     @Autowired
-    public AuthController(RegistrationService registrationsService, PersonValidator personValidator, JWTUtil jwtUtil, ModelMapper modelMapper, AuthenticationManager authenticationManager) {
+    public AuthController(RegistrationService registrationsService, PersonValidator personValidator, JWTUtil jwtUtil, 
+                        ModelMapper modelMapper, AuthenticationManager authenticationManager) {
         this.registrationsService = registrationsService;
         this.personValidator = personValidator;
         this.jwtUtil = jwtUtil;
@@ -71,5 +72,9 @@ public class AuthController {
 
     public Employee convertToEmployee(EmployeeDTO employeeDTO) {
         return modelMapper.map(employeeDTO, Employee.class);
+    }
+
+    public Employee convertToEmployeeDTO(Employee employee) {
+        return modelMapper.map(employee, EmployeeDTO.class);
     }
 }

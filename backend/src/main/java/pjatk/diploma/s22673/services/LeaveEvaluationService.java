@@ -65,7 +65,7 @@ public class LeaveEvaluationService {
         leaveEvaluationRepository.deleteById(id);
     }
 
-    @Scheduled(cron = "0 0 10 * * *")
+    @Scheduled(cron = "0 */1 * * * *")
     void evaluateRequests() {
         List<LeaveRequest> leaveRequests = leaveRequestService.findByStatus(LeaveRequestStatus.PENDING);
         for (LeaveRequest leaveRequest : leaveRequests) {
