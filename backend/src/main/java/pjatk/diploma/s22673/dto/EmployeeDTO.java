@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class EmployeeDTO {
     @NotNull(message = "Name cannot be empty")
@@ -35,6 +36,8 @@ public class EmployeeDTO {
     private LocalDate dateOfBirth;
 
     private int points;
+
+    private List<ProjectDTO> projects;
 
     public String getName() {
         return name;
@@ -82,5 +85,13 @@ public class EmployeeDTO {
 
     public void setPoints(int points) {
         this.points = points;
+    }
+
+    public List<ProjectDTO> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<ProjectDTO> projects) {
+        this.projects = projects;
     }
 }

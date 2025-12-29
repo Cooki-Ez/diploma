@@ -23,6 +23,7 @@ public class LeaveRequestDTO {
     private int employeeId;
     private int managerId;
     private int leaveEvaluationId;
+    private EmployeeDTO employee;
 
     public int getId() {
         return id;
@@ -94,5 +95,13 @@ public class LeaveRequestDTO {
 
     public void setLeaveEvaluationId(int leaveEvaluationId) {
         this.leaveEvaluationId = leaveEvaluationId;
+    }
+
+    public EmployeeDTO getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(EmployeeDTO employee) {
+        this.employee = employee;
     }
 }

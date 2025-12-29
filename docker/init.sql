@@ -66,3 +66,49 @@ CREATE INDEX IF NOT EXISTS idx_leave_request_evaluation ON leave_request(leave_e
 CREATE INDEX IF NOT EXISTS idx_leave_evaluation_employee ON leave_evaluation(employee_id);
 CREATE INDEX IF NOT EXISTS idx_project_employee_project ON project_employee(project_id);
 CREATE INDEX IF NOT EXISTS idx_project_employee_employee ON project_employee(employee_id);
+
+-- Add use_points column to leave_request table if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name='leave_request' AND column_name='use_points'
+    ) THEN
+        ALTER TABLE leave_request ADD COLUMN use_points BOOLEAN DEFAULT TRUE;
+    END IF;
+END $$;
+
+-- Insert sample data
+
+-- Create default department
+INSERT INTO department (name, location)
+VALUES ('IT Department', 'Warsaw')
+ON CONFLICT DO NOTHING;
+
+-- Insert default admin user (password: Admin123!)
+-- BCrypt hash for 'Admin123!'
+INSERT INTO employee (name, surname, email, password, date_of_birth, salary, points, roles, department_id)
+VALUES ('Admin', 'User', 'admin@company.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '1990-01-01', 10000, 100, 'ADMIN', 1)
+ON CONFLICT (email) DO NOTHING;
+
+-- Insert default manager user (password: Manager123!)
+-- BCrypt hash for 'Manager123!'
+INSERT INTO employee (name, surname, email, password, date_of_birth, salary, points, roles, department_id)
+VALUES ('Manager', 'User', 'manager@company.com', '$2a$10$rKZ6lJ3u3F9E6qM7n2qK9e9J6n3qK9e9J6n3qK9e9J6n3qK9e9J6n3qK', '1985-05-15', 8000, 50, 'MANAGER', 1)
+ON CONFLICT (email) DO NOTHING;
+
+-- Insert default regular user (password: User123!)
+-- BCrypt hash for 'User123!'
+INSERT INTO employee (name, surname, email, password, date_of_birth, salary, points, roles, department_id)
+VALUES ('Regular', 'User', 'user@company.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '1995-10-20', 5000, 25, 'EMPLOYEE', 1)
+ON CONFLICT (email) DO NOTHING;
+
+-- Insert sample project
+INSERT INTO project (name, description, start_date, end_date, importance)
+VALUES ('Sample Project', 'A sample project for testing', '2025-01-01 00:00:00', '2025-12-31 00:00:00', 'IMPORTANT')
+ON CONFLICT DO NOTHING;
+
+-- Assign users to the sample project
+INSERT INTO project_employee (project_id, employee_id)
+SELECT 1, id FROM employee WHERE id IN (1, 2, 3)
+ON CONFLICT DO NOTHING;

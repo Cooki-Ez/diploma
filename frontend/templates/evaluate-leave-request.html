@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluate Leave Request</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="leave-request-box">
+            <h1>Evaluate Leave Request</h1>
+            <div id="leaveRequestDetails">
+                <div class="detail-row">
+                    <label>Start Date:</label>
+                    <span id="detailStartDate"></span>
+                    <span id="startDays" class="days-info"></span>
+                </div>
+                <div class="detail-row">
+                    <label>End Date:</label>
+                    <span id="detailEndDate"></span>
+                    <span id="endDays" class="days-info"></span>
+                </div>
+                <div class="detail-row">
+                    <label>Project:</label>
+                    <span id="detailProject"></span>
+                </div>
+                <div class="detail-row">
+                    <label>Reasoning:</label>
+                    <span id="detailReasoning"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="evaluationComment">Comment</label>
+                <textarea id="evaluationComment" name="evaluationComment" rows="4" maxlength="255"></textarea>
+            </div>
+            <div class="button-group">
+                <button type="button" class="btn btn-success" id="approveButton">Approve</button>
+                <button type="button" class="btn btn-danger" id="rejectButton">Reject</button>
+            </div>
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/evaluate-leave-request.js}"></script>
+</body>
+</html>

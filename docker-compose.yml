@@ -1,53 +1,83 @@
 version: '3.8'
 
 services:
-  app:
+  # Backend Service
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: diploma_app
+    container_name: backend_service
     ports:
-      - "${APP_PORT}:8080"
+      - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/baade
+      SPRING_DATASOURCE_USERNAME: baade
+      SPRING_DATASOURCE_PASSWORD: passwd123!
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      JWT_SECRET: diplomaOfS22673
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - app_network
 
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_service
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: diploma_postgres
+    container_name: postgres_db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: baade
+      POSTGRES_USER: baade
+      POSTGRES_PASSWORD: passwd123!
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U baade -d baade"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - app_network
 
+  # Adminer - Database management tool
   adminer:
     image: adminer:latest
-    container_name: diploma_adminer
+    container_name: adminer
     ports:
-      - "${ADMINER_PORT}:8080"
+      - "8081:8080"
     environment:
       ADMINER_DEFAULT_SERVER: postgres
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - app_network
 
 volumes:
   postgres_data:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge
+

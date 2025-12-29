@@ -41,6 +41,12 @@ public class EmployeeController {
         return ResponseEntity.ok(convertToEmployeeDTO(employee));
     }
 
+    @GetMapping("/current")
+    public ResponseEntity<EmployeeDTO> getCurrentEmployee() {
+        Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
+        return ResponseEntity.ok(convertToEmployeeDTO(currentEmployee));
+    }
+
     //@GetMapping("/new")
     //public String newEmployee() {}
 
