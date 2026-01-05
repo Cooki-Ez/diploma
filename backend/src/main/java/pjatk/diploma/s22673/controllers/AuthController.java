@@ -74,7 +74,7 @@ public class AuthController {
         return modelMapper.map(employeeDTO, Employee.class);
     }
 
-    public Employee convertToEmployeeDTO(Employee employee) {
+    public EmployeeDTO convertToEmployeeDTO(Employee employee) {
         return modelMapper.map(employee, EmployeeDTO.class);
     }
 }

@@ -43,7 +43,7 @@ public class Employee {
     @NotNull(message = "Email can not be empty")
     @NotEmpty(message = "Email can not be empty")
     @Size(max = 100, message = "Email should be less than 100 characters")
-    private String Email;
+    private String email;
 
     @Column(name = "password", nullable = false)
     private String password;
