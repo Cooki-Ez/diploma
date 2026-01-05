@@ -1,6 +1,6 @@
 # Employee Management System
 
-A web application for managing employees, departments, projects, and leave requests using Java Spring Boot, PostgreSQL, and a simple HTML/CSS/JS frontend.
+A web application for managing employees, departments, projects, and leave requests using Java Spring Boot, PostgreSQL, Thymeleaf, HTML, CSS, and JavaScript.
 
 ## Project Structure
 
@@ -10,18 +10,13 @@ diploma/
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/        # Java source code
-│   │   │   └── resources/  # Configuration files
+│   │   │   └── resources/   # Configuration and frontend files
+│   │   │       ├── static/  # Static CSS and JS files
+│   │   │       └── templates/  # Thymeleaf HTML templates
 │   ├── Dockerfile           # Backend Docker image
 │   ├── pom.xml            # Maven dependencies
 │   ├── mvnw              # Maven wrapper (Unix)
 │   └── mvnw.cmd          # Maven wrapper (Windows)
-├── frontend/              # Static frontend files
-│   ├── static/
-│   │   ├── css/          # Stylesheets
-│   │   ├── js/           # JavaScript files
-│   │   └── templates/    # HTML templates
-│   ├── Dockerfile        # Frontend Docker image
-│   └── API_DOCUMENTATION.md  # Frontend API documentation
 ├── docker/              # Database initialization scripts
 │   └── init.sql         # Database schema and sample data
 └── docker-compose.yml    # Multi-service orchestration
@@ -41,8 +36,7 @@ diploma/
    docker-compose up --build
    ```
 3. The application will be available at:
-   - **Frontend (Login)**: http://localhost/
-   - **Backend API**: http://localhost:8080/
+   - **Application**: http://localhost/
    - **Database Admin (Adminer)**: http://localhost:8081/
 
 4. To stop all services:
@@ -57,15 +51,10 @@ diploma/
 
 ## Services
 
-### Frontend Service
-- **Port**: 80
-- **Technology**: Nginx serving static HTML/CSS/JS
-- **Description**: Serves the three frontend pages for login, leave request creation, and evaluation
-
 ### Backend Service
-- **Port**: 8080
-- **Technology**: Spring Boot 3.5.7 with Java 17
-- **Description**: RESTful API handling authentication, employee management, and leave requests
+- **Port**: 80 (external), 8080 (internal)
+- **Technology**: Spring Boot 3.5.7 with Java 17 and Thymeleaf
+- **Description**: Full-stack application serving both API endpoints and web pages using Thymeleaf templates
 
 ### PostgreSQL Database
 - **Port**: 5432
@@ -189,7 +178,7 @@ See `docker/init.sql` for complete schema and sample data.
 
 ## Technology Stack
 
-- **Backend**: Java 17, Spring Boot 3.5.7
+- **Backend**: Java 17, Spring Boot 3.5.7, Thymeleaf
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **Database**: PostgreSQL 16
 - **ORM**: Hibernate/JPA
@@ -197,7 +186,6 @@ See `docker/init.sql` for complete schema and sample data.
 - **Database Administration**: Adminer
 - **Build Tool**: Maven
 - **Security**: Spring Security with JWT authentication
-- **Web Server**: Nginx (for frontend)
 
 ## Authorization Changes
 
@@ -211,8 +199,12 @@ To simplify the application for frontend implementation, the following changes w
 
 ## Frontend Documentation
 
-For detailed information about how each frontend page communicates with the backend API, see:
-- `frontend/API_DOCUMENTATION.md` - Comprehensive API documentation with code examples
+The frontend uses Thymeleaf templates located in `backend/src/main/resources/templates/`:
+- `login.html` - Login page
+- `create-leave-request.html` - Leave request creation page
+- `evaluate-leave-request.html` - Leave request evaluation page
+
+Static CSS and JavaScript files are located in `backend/src/main/resources/static/`.
 
 ## Development
 
@@ -235,17 +227,7 @@ To develop the backend locally:
 
 ### Frontend Development
 
-To develop the frontend locally:
-
-1. Serve static files using any web server (e.g., Python's http.server)
-2. Ensure backend is running and accessible at http://localhost:8080
-3. Open `http://localhost:8080/login` in your browser
-
-Example using Python:
-```bash
-cd frontend
-python -m http.server 8080
-```
+The frontend is served directly by the Spring Boot application using Thymeleaf templates. No separate development setup is needed - just run the backend and access the web interface.
 
 ## Testing
 
@@ -273,7 +255,7 @@ cd backend
 ### Port Already in Use
 
 If you see "port is already allocated" error:
-- Check what's using the port: `netstat -ano | findstr :8080` (Windows) or `lsof -i :8080` (Linux/Mac)
+- Check what's using the port: `netstat -ano | findstr :80` (Windows) or `lsof -i :80` (Linux/Mac)
 - Change the port in `docker-compose.yml` or stop the conflicting service
 
 ### Database Connection Issues

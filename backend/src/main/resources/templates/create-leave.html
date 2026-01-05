@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Create Leave Request</title>
+    <link rel="stylesheet" th:href="@{/css/leave.css}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <header class="top-bar">
+            <div class="company">Unknown Ltd.</div>
+            <nav class="nav-tabs">
+                <a th:href="@{/employees}">Employees</a>
+                <a th:href="@{/leaves}" class="active">Leaves</a>
+                <a th:href="@{/admin}">Admin</a>
+            </nav>
+            <div class="user">
+                <span th:text="${currentEmployee.fullName}">User Name</span>
+                <a th:href="@{/auth/logout}">Logout</a>
+            </div>
+        </header>
+
+        <div class="form-card">
+            <h2>Create Leave Request</h2>
+
+            <form id="leaveForm">
+                <div class="row">
+                    <label>From:</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <div class="row">
+                    <label>To:</label>
+                    <input type="date" id="endDate" required>
+                </div>
+
+                <div class="row project">
+                    <label>Your project:</label>
+                    <div id="projectDisplay">Loading...</div>
+                </div>
+
+                <div class="row reasoning">
+                    <label>Reasoning:</label>
+                    <textarea id="comment" rows="5" placeholder="Type reason" required></textarea>
+                </div>
+
+                <div class="row checkbox">
+                    <input type="checkbox" id="noPoints">
+                    <label for="noPoints">Request leave without points deducted</label>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn request">Request</button>
+                    <button type="button" class="btn cancel" id="cancelButton">Cancel</button>
+                </div>
+
+            </form>
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+        </div>
+
+    </div>
+
+    <style>
+        .error-message, .success-message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 4px;
+            display: none;
+            text-align: center;
+        }
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        .error-message.visible, .success-message.visible {
+            display: block;
+        }
+        #projectDisplay {
+            background: #515151;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #666;
+        }
+    </style>
+
+    <script th:src="@{/js/leave.js}"></script>
+
+</body>
+
+</html>

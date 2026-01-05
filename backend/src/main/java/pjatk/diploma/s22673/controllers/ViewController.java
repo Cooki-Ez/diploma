@@ -17,6 +17,11 @@ public class ViewController {
         return "create-leave-request";
     }
 
+    @GetMapping("/create-leave")
+    public String createLeavePage() {
+        return "create-leave";
+    }
+
     @GetMapping("/evaluate-leave-request")
     public String evaluateLeaveRequestPage(@RequestParam(value = "id", required = false) Integer id, Model model) {
         if (id != null) {
