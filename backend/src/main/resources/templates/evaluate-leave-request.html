@@ -4,12 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evaluate Leave Request</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/leave.css}">
 </head>
 <body>
     <div class="container">
-        <div class="leave-request-box">
-            <h1>Evaluate Leave Request</h1>
+        <div class="top-bar">
+            <div class="company">Unknown Ltd.</div>
+            <nav class="nav-tabs">
+                <a th:href="@{/employees}">Employees</a>
+                <a th:href="@{/leaves}" class="active">Leaves</a>
+                <a th:href="@{/admin}">Admin</a>
+            </nav>
+            <div class="user">
+                <span id="userName">Loading...</span>
+                <a th:href="@{/auth/logout}">Logout</a>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h2>Evaluate Leave Request</h2>
             <div id="leaveRequestDetails">
                 <div class="detail-row">
                     <label>Start Date:</label>
@@ -30,19 +43,28 @@
                     <span id="detailReasoning"></span>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="evaluationComment">Comment</label>
+            <div class="row">
+                <label for="evaluationComment">Comment:</label>
                 <textarea id="evaluationComment" name="evaluationComment" rows="4" maxlength="255"></textarea>
             </div>
-            <div class="button-group">
-                <button type="button" class="btn btn-success" id="approveButton">Approve</button>
-                <button type="button" class="btn btn-danger" id="rejectButton">Reject</button>
+            <div class="actions">
+                <button type="button" class="btn request" id="approveButton">Approve</button>
+                <button type="button" class="btn cancel" id="rejectButton">Reject</button>
             </div>
             <div id="error-message" class="error-message"></div>
             <div id="success-message" class="success-message"></div>
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-popup">
+            <div class="modal-title">Approved</div>
+            <div class="modal-message">Leave request has been approved successfully.</div>
+            <button class="modal-ok-button" id="modalOkButton">OK</button>
+        </div>
+    </div>
+
     <script th:src="@{/js/evaluate-leave-request.js}"></script>
 </body>
 </html>
+

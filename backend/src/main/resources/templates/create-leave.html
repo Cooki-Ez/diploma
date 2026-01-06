@@ -19,7 +19,7 @@
                 <a th:href="@{/admin}">Admin</a>
             </nav>
             <div class="user">
-                <span th:text="${currentEmployee.fullName}">User Name</span>
+                <span id="userName">Loading...</span>
                 <a th:href="@{/auth/logout}">Logout</a>
             </div>
         </header>
@@ -28,13 +28,15 @@
             <h2>Create Leave Request</h2>
 
             <form id="leaveForm">
-                <div class="row">
-                    <label>From:</label>
-                    <input type="date" id="startDate" required>
-                </div>
-                <div class="row">
-                    <label>To:</label>
-                    <input type="date" id="endDate" required>
+                <div class="date-row">
+                    <div>
+                        <label for="startDate">From:</label>
+                        <input type="date" id="startDate" name="startDate">
+                    </div>
+                    <div>
+                        <label for="endDate">To:</label>
+                        <input type="date" id="endDate" name="endDate">
+                    </div>
                 </div>
 
                 <div class="row project">
@@ -47,8 +49,8 @@
                     <textarea id="comment" rows="5" placeholder="Type reason" required></textarea>
                 </div>
 
-                <div class="row checkbox">
-                    <input type="checkbox" id="noPoints">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="noPoints" name="no-points">
                     <label for="noPoints">Request leave without points deducted</label>
                 </div>
 
@@ -64,36 +66,7 @@
 
     </div>
 
-    <style>
-        .error-message, .success-message {
-            margin-top: 16px;
-            padding: 12px;
-            border-radius: 4px;
-            display: none;
-            text-align: center;
-        }
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ef9a9a;
-        }
-        .success-message {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #a5d6a7;
-        }
-        .error-message.visible, .success-message.visible {
-            display: block;
-        }
-        #projectDisplay {
-            background: #515151;
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #666;
-        }
-    </style>
-
-    <script th:src="@{/js/leave.js}"></script>
+    <script th:src="@{/js/login.js}"></script>
 
 </body>
 

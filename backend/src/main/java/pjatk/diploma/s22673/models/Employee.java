@@ -1,6 +1,7 @@
 package pjatk.diploma.s22673.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -39,7 +41,7 @@ public class Employee {
     private String surname;
 
     @Column(name = "email", unique = true, nullable = false)
-    @Email(message = "Please enter a valid email address", regexp = "^[A-Za-z0-9]+@[A-Za-z0-9]+.[A-Za-z0-9]+$")
+    @Email(message = "Please enter a valid email address")
     @NotNull(message = "Email can not be empty")
     @NotEmpty(message = "Email can not be empty")
     @Size(max = 100, message = "Email should be less than 100 characters")
@@ -50,22 +52,14 @@ public class Employee {
 
     @Column(name = "date_of_birth")
     @NotNull
-    @Pattern(
-    regexp = "^(0[1-9]|[12][0-9]|3[01])([./])(0[1-9]|1[0-2])\\2(\\d{4})$",
-    message = "Date of birth must be in format dd.MM.yyyy or dd/MM/yyyy"
-    )
     private LocalDate dateOfBirth;
 
-
     @Column(name = "salary")
-    @NotNull(message = "Salary cannot be empty")
     @DecimalMin(value = "500", message = "Salary cannot be lower than 500PLN")
-    private double salary;
-    private int age;
+    private Double salary;
 
     @Column(name = "points")
     @DecimalMin(value = "0")
-    @NotNull
     private int points;
 
     @Convert(converter = RoleConverter.class)
@@ -74,7 +68,6 @@ public class Employee {
 
     @ManyToOne(cascade = CascadeType.DETACH)
     @JoinColumn(name = "department_id", referencedColumnName = "id")
-    @NotNull(message = "Department should be specified")
     private Department department;
 
     @OneToMany(mappedBy = "employee")
@@ -88,7 +81,7 @@ public class Employee {
     private List<LeaveEvaluation>  leaveEvaluations;
 
     @ManyToMany(mappedBy = "employees")
-    @JsonIgnore
+    @JsonManagedReference
     private List<Project> projects;
 
     public Employee(String name, String surname, double salary, EnumSet<EmployeeRole> roles) {
@@ -98,10 +91,11 @@ public class Employee {
         this.roles = roles;
     }
 
-    private int getAge() {
+    public int getAge() {
         return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
 }
+
 
 
 

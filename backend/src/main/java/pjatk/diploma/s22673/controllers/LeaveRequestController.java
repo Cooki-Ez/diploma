@@ -28,7 +28,7 @@ public class LeaveRequestController {
         this.modelMapper = modelMapper;
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<LeaveRequestDTO>> findAll() {
         List<LeaveRequest> leaveRequests = leaveRequestService.findAll();
         List<LeaveRequestDTO> leaveRequestDTOs = leaveRequests.stream()
@@ -47,8 +47,6 @@ public class LeaveRequestController {
     public ResponseEntity<LeaveRequestDTO> create(@RequestBody LeaveRequestDTO leaveRequestDTO) {
         LeaveRequest leaveRequest = convertToLeaveRequest(leaveRequestDTO);
         
-        Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
-        leaveRequest.setEmployee(currentEmployee);
         
         LeaveRequest savedRequest = leaveRequestService.save(leaveRequest);
         return ResponseEntity.ok(convertToLeaveRequestDTO(savedRequest));
@@ -85,3 +83,4 @@ public class LeaveRequestController {
         return modelMapper.map(leaveRequestDTO, LeaveRequest.class);
     }
 }
+

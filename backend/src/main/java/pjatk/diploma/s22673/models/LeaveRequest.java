@@ -52,7 +52,7 @@ public class LeaveRequest {
     @JsonIgnore
     private Employee manager;
 
-    @ManyToOne(cascade = CascadeType.DETACH)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "leave_evaluation_id", referencedColumnName = "id")
     private LeaveEvaluation leaveEvaluation;
 

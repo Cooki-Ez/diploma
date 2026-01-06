@@ -9,11 +9,11 @@ import java.util.EnumSet;
 import java.util.stream.Collectors;
 
 @Converter(autoApply = true)
-public class RoleConverter implements AttributeConverter<EnumSet<EmployeeRole>,String> {
+public class RoleConverter implements AttributeConverter<EnumSet<EmployeeRole>, String> {
     @Override
     public String convertToDatabaseColumn(EnumSet<EmployeeRole> employeeRoleEnumSet) {
         if (employeeRoleEnumSet == null)
-            return null;
+            return "";
         return employeeRoleEnumSet.stream()
                 .map(Enum::name)
                 .collect(Collectors.joining(","));
@@ -22,12 +22,10 @@ public class RoleConverter implements AttributeConverter<EnumSet<EmployeeRole>,S
     @Override
     public EnumSet<EmployeeRole> convertToEntityAttribute(String s) {
         if (s == null || s.isEmpty())
-            return null;
+            return EnumSet.noneOf(EmployeeRole.class);
         String[] types = s.split(",");
-        return EnumSet.copyOf(
-                Arrays.stream(types)
-                        .map(EmployeeRole::valueOf)
-                        .collect(Collectors.toSet())
-        );
+        return Arrays.stream(types)
+                .map(EmployeeRole::valueOf)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(EmployeeRole.class)));
     }
 }

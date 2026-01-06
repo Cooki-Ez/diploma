@@ -11,9 +11,4 @@ public class S22673Application {
     public static void main(String[] args) {
         SpringApplication.run(S22673Application.class, args);
     }
-
-    @Bean
-    public ModelMapper modelMapper() {
-        return new ModelMapper();
-    }
 }

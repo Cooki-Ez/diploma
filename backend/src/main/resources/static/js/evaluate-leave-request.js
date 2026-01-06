@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const evaluationComment = document.getElementById('evaluationComment');
     const errorMessage = document.getElementById('error-message');
     const successMessage = document.getElementById('success-message');
+    const userNameDisplay = document.getElementById('userName');
 
     function getAuthToken() {
         return localStorage.getItem('jwt-token');
@@ -41,6 +42,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const diffTime = end - start;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
         return diffDays > 0 ? diffDays : 0;
+    }
+
+    async function loadCurrentUser() {
+        try {
+            const response = await fetch('/employees/current', {
+                headers: {
+                    'Authorization': 'Bearer ' + getAuthToken()
+                }
+            });
+
+            if (response.ok) {
+                const employee = await response.json();
+                if (userNameDisplay) {
+                    userNameDisplay.textContent = employee.name + ' ' + employee.surname;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading current user:', error);
+            if (userNameDisplay) {
+                userNameDisplay.textContent = 'Unknown User';
+            }
+        }
     }
 
     async function loadLeaveRequestDetails() {
@@ -103,10 +126,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
-                showSuccess(approved ? 'Leave request approved!' : 'Leave request rejected!');
-                setTimeout(() => {
-                    window.close();
-                }, 2000);
+                if (approved) {
+                    showModal();
+                } else {
+                    showSuccess('Leave request rejected!');
+                    setTimeout(() => {
+                        window.location.href = '/leaves';
+                    }, 2000);
+                }
             } else {
                 const error = await response.json();
                 showError(error.message || 'Failed to evaluate leave request');
@@ -115,6 +142,25 @@ document.addEventListener('DOMContentLoaded', function() {
             showError('An error occurred while evaluating the request');
             console.error(error);
         }
+    }
+
+    function showModal() {
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalOkButton = document.getElementById('modalOkButton');
+
+        modalOverlay.classList.add('visible');
+
+        modalOkButton.onclick = function() {
+            modalOverlay.classList.remove('visible');
+            window.location.href = '/leaves';
+        };
+
+        modalOverlay.onclick = function(e) {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('visible');
+                window.location.href = '/leaves';
+            }
+        };
     }
 
     approveButton.addEventListener('click', function() {
@@ -127,9 +173,12 @@ document.addEventListener('DOMContentLoaded', function() {
         evaluateLeaveRequest(false);
     });
 
+    loadCurrentUser();
+
     if (leaveRequestId) {
         loadLeaveRequestDetails();
     } else {
         showError('Please provide a leave request ID in the URL');
     }
 });
+

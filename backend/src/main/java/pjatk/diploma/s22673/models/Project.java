@@ -1,5 +1,6 @@
 package pjatk.diploma.s22673.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -51,6 +52,7 @@ public class Project {
             joinColumns = @JoinColumn(name = "project_id"),
             inverseJoinColumns = @JoinColumn(name = "employee_id")
     )
+    @JsonBackReference
     List<Employee> employees;
 
 }
