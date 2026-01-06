@@ -7,8 +7,10 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -22,14 +24,12 @@ public class LeaveRequest {
     private int id;
 
     @Column(name = "start_date")
-    @Temporal(TemporalType.TIMESTAMP)
     @NotNull(message = "Please specify start date")
-    private Timestamp startDate;
+    private LocalDateTime  startDate;
 
     @Column(name = "end_date")
-    @Temporal(TemporalType.TIMESTAMP)
     @NotNull(message = "Please specify end date")
-    private Timestamp endDate;
+    private LocalDateTime endDate;
 
     @Column(name = "comment")
     @Size(max = 255, message = "Comment should be less than 255 characters")
@@ -40,7 +40,10 @@ public class LeaveRequest {
     private LeaveRequestStatus status;
 
     @Column(name = "use_points")
-    private boolean usePoints = true; // Default to true for backward compatibility
+    private boolean usePoints = true;
+
+    @Column(name = "creation_date")
+    private LocalDateTime creationDate;
 
     @ManyToOne
     @JoinColumn(name = "employee_id")
@@ -52,15 +55,9 @@ public class LeaveRequest {
     @JsonIgnore
     private Employee manager;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "leave_evaluation_id", referencedColumnName = "id")
     private LeaveEvaluation leaveEvaluation;
-
-    public LeaveRequest(Timestamp startDate, Timestamp endDate, String comment, LeaveRequestStatus status) {
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.comment = comment;
-        this.status = status;
-    }
 }
+ 
 

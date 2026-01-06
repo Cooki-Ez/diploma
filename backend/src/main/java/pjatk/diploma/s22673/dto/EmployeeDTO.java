@@ -1,20 +1,19 @@
 package pjatk.diploma.s22673.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import pjatk.diploma.s22673.models.EmployeeRole;
 
 import java.time.LocalDate;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
 @Getter
 @Setter
 public class EmployeeDTO {
+    private int id;
+
     @Setter
     @NotNull(message = "Name cannot be empty")
     @NotEmpty(message = "Name cannot be empty")

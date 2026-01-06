@@ -80,7 +80,7 @@ public class Employee {
     @JsonIgnore
     private List<LeaveEvaluation>  leaveEvaluations;
 
-    @ManyToMany(mappedBy = "employees")
+    @ManyToMany(mappedBy = "employees", fetch =  FetchType.EAGER)
     @JsonManagedReference
     private List<Project> projects;
 

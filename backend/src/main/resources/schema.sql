@@ -57,6 +57,7 @@ CREATE TABLE Leave_Request (
     comment VARCHAR(255),
     status VARCHAR(20),
     use_points BOOLEAN DEFAULT TRUE,
+    creation_date TIMESTAMP,
     employee_id INTEGER,
     manager_id INTEGER,
     leave_evaluation_id INTEGER,

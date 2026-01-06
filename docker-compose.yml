@@ -1,19 +1,18 @@
 version: '3.8'
 
 services:
-  # Backend Service
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: backend_service
     ports:
-      - "80:8080"
+      - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/baade
       SPRING_DATASOURCE_USERNAME: baade
       SPRING_DATASOURCE_PASSWORD: passwd123!
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       JWT_SECRET: diplomaOfS22673
     depends_on:
       postgres:
@@ -22,7 +21,21 @@ services:
     networks:
       - app_network
 
-  # PostgreSQL Database
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_service
+    ports:
+      - "3000:3000"
+    command: npm run dev
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app_network
+
   postgres:
     image: postgres:16-alpine
     container_name: postgres_db
@@ -34,27 +47,13 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./backend/src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U baade -d baade"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
-    networks:
-      - app_network
-
-  # Adminer - Database management tool
-  adminer:
-    image: adminer:latest
-    container_name: adminer
-    ports:
-      - "8081:8080"
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: unless-stopped
     networks:
       - app_network
@@ -66,4 +65,3 @@ volumes:
 networks:
   app_network:
     driver: bridge
-

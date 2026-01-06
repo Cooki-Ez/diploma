@@ -1,29 +1,29 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evaluate Leave Request</title>
-    <link rel="stylesheet" th:href="@{/css/leave.css}">
+    <link rel="stylesheet" href="/css/leave.css">
 </head>
 <body>
     <div class="container">
         <div class="top-bar">
             <div class="company">Unknown Ltd.</div>
             <nav class="nav-tabs">
-                <a th:href="@{/employees}">Employees</a>
-                <a th:href="@{/leaves-view}" class="active">Leaves</a>
-                <a th:href="@{/admin}">Admin</a>
+                <a href="/employees.html">Employees</a>
+                <a href="/leaves.html" class="active">Leaves</a>
+                <a href="/admin.html">Admin</a>
             </nav>
             <div class="user">
                 <span id="userName">Loading...</span>
-                <a th:href="@{/auth/logout}">Logout</a>
+                <a href="#" id="logoutButton">Logout</a>
             </div>
         </div>
 
         <div class="form-card">
             <h2>Evaluate Leave Request</h2>
-            <input type="hidden" id="leaveRequestId" th:value="${leaveRequestId}">
+            <input type="hidden" id="leaveRequestId">
             <div id="leaveRequestDetails">
                 <div class="detail-row">
                     <label>Requested by:</label>
@@ -80,7 +80,6 @@
         </div>
     </div>
 
-    <script th:src="@{/js/evaluate-leave-request.js}"></script>
+    <script src="/js/evaluate-leave-request.js"></script>
 </body>
 </html>
-

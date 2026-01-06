@@ -53,8 +53,13 @@ public class AuthController {
             return Map.of("message", "Invalid credentials");
         }
 
-        String token =  jwtUtil.generateToken(authenticationDTO.getUsername());
+        String token = jwtUtil.generateToken(authenticationDTO.getUsername());
         return Map.of("jwt-token", token);
+    }
+
+    @PostMapping("/logout")
+    public Map<String, String> performLogout() {
+        return Map.of("message", "Logged out successfully");
     }
 
     @PostMapping("/registration")
@@ -71,6 +76,7 @@ public class AuthController {
         String token = jwtUtil.generateToken(employee.getEmail());
         return Collections.singletonMap("jwt-token", token);
     }
+
 
     public Employee convertToEmployee(EmployeeDTO employeeDTO) {
         Employee employee = modelMapper.map(employeeDTO, Employee.class);

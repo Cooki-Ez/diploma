@@ -5,6 +5,49 @@ A web application for managing employees, departments, projects, and leave reque
 ## Project Structure
 
 ```
+s22673/
+├── backend/                  # Spring Boot backend application
+│   ├── src/
+│   │   ├── java/        # Java source code
+│   │   └── resources/   # Configuration and frontend files
+│   │       ├── static/   # Static CSS and JS files (now for reference only)
+│   │       └── templates/ # Thymeleaf HTML templates (now for reference only)
+│   ├── Dockerfile          # Backend Docker image
+│   └── pom.xml            # Maven dependencies
+├── frontend/                 # Frontend application
+│   ├── public/              # Static HTML/CSS/JS files
+│   │   ├── index.html          # Entry point, redirects to login
+│   │   ├── login.html          # Login page
+│   │   ├── create-leave.html   # Create leave request form
+│   │   ├── leaves.html         # Leave requests list page
+│   │   ├── evaluate-leave-request.html  # Evaluate leave request page
+│   │   ├── css/
+│   │   │   ├── leave.css
+│   │   │   └── styles.css
+│   │   └── js/
+│   │       ├── login.js                # Handles login + logout + create form
+│   │       ├── leave.js                # Handles leave list + create form
+│   │       └── evaluate-leave-request.js  # Handles evaluation
+│   ├── server.js            # Express server to serve static files
+│   ├── package.json          # NPM dependencies
+│   ├── Dockerfile          # Frontend Docker image
+│   └── .dockerignore       # Excludes node_modules
+├── docker-compose.yml        # Docker Compose orchestration
+├── run-docker.sh            # Linux/Mac runner script
+└── run-docker.bat            # Windows runner script
+```
+
+### Docker Scripts
+
+Two interactive scripts are provided for easy Docker management:
+
+**run-docker.sh (Linux/Mac):**
+- Interactive menu-driven script
+- Provides options to start, stop, restart, view logs, and clean services
+
+**run-docker.bat (Windows):**
+- Windows batch script with same functionality as the shell script
+- Easy double-click execution from File Explorer
 diploma/
 ├── backend/                  # Spring Boot backend application
 │   ├── src/
@@ -24,16 +67,90 @@ diploma/
 
 ## Quick Start
 
-### Prerequisites
+### Using Docker (Recommended)
 
-- Docker and Docker Compose installed on your system
+#### Prerequisites
+- Docker Desktop installed and running
+- Git (for cloning)
 
-### Using Docker Compose
+#### Option 1: Interactive Script Menu (Recommended)
 
-1. Clone this repository
-2. Run the following command to build and start all services:
+**Windows:**
+```bash
+run-docker.bat
+```
+
+**Linux/Mac:**
+```bash
+chmod +x run-docker.sh
+./run-docker.sh
+```
+
+This provides a menu with options:
+1. Start all services
+2. Stop all services
+3. Restart all services
+4. View logs for all services
+5. View logs for backend service
+6. View logs for frontend service
+7. View logs for postgres service
+8. Stop and remove all containers and volumes
+9. Build and start all services (clean rebuild)
+0. Exit
+
+#### Option 2: Direct Docker Compose Commands
+
+Start all services:
+```bash
+docker-compose up -d
+```
+
+Stop all services:
+```bash
+docker-compose down
+```
+
+Build and start all services:
+```bash
+docker-compose up -d --build
+```
+
+View logs:
+```bash
+docker-compose logs -f
+```
+
+### Access Points
+
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:8080
+- **Adminer (DB UI):** http://localhost:8081
+
+### Troubleshooting
+
+1. **Services not starting?**
    ```bash
-   docker-compose up --build
+   docker-compose down -v
+   docker-compose up -d
+   ```
+
+2. **Backend API not responding?**
+   - Check backend logs: `docker-compose logs -f backend`
+   - Ensure database is healthy
+
+3. **Frontend not connecting to backend?**
+   - Check if backend is running
+   - Verify API_BASE_URL in frontend JS files (should be http://localhost:8080)
+   - Check browser console for CORS errors
+
+4. **Database connection issues?**
+   - Check postgres logs: `docker-compose logs -f postgres`
+   - Wait a few seconds for PostgreSQL to initialize
+
+5. **Clear all data and start fresh?**
+   ```bash
+   docker-compose down -v
+   docker-compose up -d
    ```
 3. The application will be available at:
    - **Application**: http://localhost/

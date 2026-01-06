@@ -57,7 +57,7 @@ public class LeaveRequestService {
         Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
         // TODO
         leaveRequest.setEmployee(currentEmployee);
-        leaveRequest.setManager(currentEmployee);
+        leaveRequest.setManager(null);
         if (leaveRequest.getStatus() == null) {
             leaveRequest.setStatus(LeaveRequestStatus.PENDING);
         }

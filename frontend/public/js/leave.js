@@ -1,44 +1,42 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    const API_BASE_URL = 'http://localhost:8080';
+
     const form = document.getElementById('leaveForm');
     const leaveRequestsList = document.getElementById('leaveRequestsList');
     const createLeaveButton = document.getElementById('createLeaveButton');
     const userNameDisplay = document.getElementById('userName');
 
-    let isSubmitting = false; // prevents double save
+    let isSubmitting = false;
 
     function getAuthToken() {
         return localStorage.getItem('jwt-token');
     }
 
-    setupLogoutButton();
-    loadCurrentUser();
+    setupLogoutButton(API_BASE_URL);
+    loadCurrentUser(API_BASE_URL);
 
     if (form) handleLeaveForm();
     if (leaveRequestsList) handleLeavesList();
-
     if (createLeaveButton) {
         createLeaveButton.addEventListener('click', () => {
-            window.location.href = '/create-leave';
+            window.location.href = '/create-leave.html';
         });
     }
 
-    // -----------------------------------------------------
-    // LOGOUT
-    // -----------------------------------------------------
-    function setupLogoutButton() {
-        const logoutButton = document.querySelector('a[href="/auth/logout"]');
+    function setupLogoutButton(apiBaseUrl) {
+        const logoutButton = document.getElementById('logoutButton');
         if (logoutButton) {
             logoutButton.addEventListener('click', function (e) {
                 e.preventDefault();
-                handleLogout();
+                handleLogout(apiBaseUrl);
             });
         }
     }
 
-    async function handleLogout() {
+    async function handleLogout(apiBaseUrl) {
         try {
-            await fetch('/auth/logout', {
+            await fetch(`${apiBaseUrl}/auth/logout`, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + getAuthToken() }
             });
@@ -46,15 +44,12 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Logout error:', e);
         }
         localStorage.removeItem('jwt-token');
-        window.location.href = '/login';
+        window.location.href = '/login.html';
     }
 
-    // -----------------------------------------------------
-    // LOAD CURRENT USER
-    // -----------------------------------------------------
-    async function loadCurrentUser() {
+    async function loadCurrentUser(apiBaseUrl) {
         try {
-            const response = await fetch('/employees/current', {
+            const response = await fetch(`${apiBaseUrl}/employees/current`, {
                 headers: { 'Authorization': 'Bearer ' + getAuthToken() }
             });
 
@@ -68,9 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // -----------------------------------------------------
-    // CREATE LEAVE FORM
-    // -----------------------------------------------------
     function handleLeaveForm() {
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
@@ -97,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         async function loadEmployeeData() {
             try {
-                const response = await fetch('/employees/current', {
+                const response = await fetch(`${API_BASE_URL}/employees/current`, {
                     headers: { 'Authorization': 'Bearer ' + getAuthToken() }
                 });
 
@@ -142,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             try {
-                const response = await fetch('/leaves', {
+                const response = await fetch(`${API_BASE_URL}/leaves`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -154,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (response.ok) {
                     showSuccess('Leave request submitted successfully');
                     form.reset();
-                    setTimeout(() => window.location.href = '/leaves-view', 1000);
+                    setTimeout(() => window.location.href = '/leaves.html', 1000);
                 } else {
                     const error = await response.json();
                     showError(error.message || 'Failed to submit leave request');
@@ -169,15 +161,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         cancelButton.addEventListener('click', () => {
             form.reset();
-            window.location.href = '/leaves-view';
+            window.location.href = '/leaves.html';
         });
 
         loadEmployeeData();
     }
 
-    // -----------------------------------------------------
-    // LEAVE LIST PAGE
-    // -----------------------------------------------------
     function handleLeavesList() {
         const errorMessage = document.getElementById('error-message');
 
@@ -207,9 +196,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        function renderRequests(requests, isInactive) {
+        function renderRequests(requests) {
             return requests.map(request => `
-                <div class="leave-request-item ${isInactive ? 'inactive' : ''}" data-id="${request.id}">
+                <div class="leave-request-item" data-id="${request.id}">
                     <div class="leave-request-header">
                         <span class="leave-request-id">#${request.id}</span>
                         <span class="leave-request-status ${getStatusClass(request.status)}">${request.status}</span>
@@ -217,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="leave-request-info">
                         <div class="info-row"><strong>From:</strong> ${formatDate(request.startDate)}</div>
                         <div class="info-row"><strong>To:</strong> ${formatDate(request.endDate)}</div>
+                        <div class="info-row"><strong>Created:</strong> ${formatDate(request.creationDate)}</div>
                         <div class="info-row"><strong>Comment:</strong> ${request.comment || 'No comment'}</div>
                         <div class="info-row"><strong>Employee:</strong> ${request.employee?.name || ''} ${request.employee?.surname || ''}</div>
                     </div>
@@ -229,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         async function loadLeaveRequests() {
             try {
-                const response = await fetch('/leaves/all', {
+                const response = await fetch(`${API_BASE_URL}/leaves`, {
                     headers: { 'Authorization': 'Bearer ' + getAuthToken() }
                 });
 
@@ -240,26 +230,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const leaveRequests = await response.json();
 
-                // SORT newest → oldest
-                const sortedPending = leaveRequests
-                    .filter(r => r.status === 'PENDING')
-                    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+                if (leaveRequests.length === 0) {
+                    leaveRequestsList.innerHTML = '<div class="no-requests">No leave requests found</div>';
+                    return;
+                }
 
-                const sortedOthers = leaveRequests
-                    .filter(r => r.status !== 'PENDING')
-                    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-
-                leaveRequestsList.innerHTML = `
-                    <h3>Pending Requests</h3>
-                    ${renderRequests(sortedPending, false)}
-                    <h3>Other Requests</h3>
-                    ${renderRequests(sortedOthers, true)}
-                `;
+                leaveRequestsList.innerHTML = renderRequests(leaveRequests);
 
                 document.querySelectorAll('.btn-evaluate').forEach(button => {
                     button.addEventListener('click', function () {
                         const id = this.getAttribute('data-id');
-                        window.location.href = `/evaluate-leave-request/${id}`;
+                        window.location.href = `/evaluate-leave-request.html?id=${id}`;
                     });
                 });
 
@@ -267,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     item.addEventListener('click', function (e) {
                         if (!e.target.classList.contains('btn-evaluate')) {
                             const id = this.getAttribute('data-id');
-                            window.location.href = `/evaluate-leave-request/${id}`;
+                            window.location.href = `/evaluate-leave-request.html?id=${id}`;
                         }
                     });
                 });

@@ -1,26 +1,23 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Create Leave Request</title>
-    <link rel="stylesheet" th:href="@{/css/leave.css}">
+    <link rel="stylesheet" href="/css/leave.css">
 </head>
-
 <body>
-
     <div class="container">
 
         <header class="top-bar">
             <div class="company">Unknown Ltd.</div>
             <nav class="nav-tabs">
-                <a th:href="@{/employees}">Employees</a>
-                <a th:href="@{/leaves-view}" class="active">Leaves</a>
-                <a th:href="@{/admin}">Admin</a>
+                <a href="/employees.html">Employees</a>
+                <a href="/leaves.html" class="active">Leaves</a>
+                <a href="/admin.html">Admin</a>
             </nav>
             <div class="user">
                 <span id="userName">Loading...</span>
-                <a th:href="@{/auth/logout}">Logout</a>
+                <a href="#" id="logoutButton">Logout</a>
             </div>
         </header>
 
@@ -66,8 +63,6 @@
 
     </div>
 
-    <script th:src="@{/js/login.js}"></script>
-
+    <script src="/js/login.js"></script>
 </body>
-
 </html>

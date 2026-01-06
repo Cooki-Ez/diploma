@@ -27,8 +27,8 @@ INSERT INTO Leave_Evaluation (date, comment, employee_id) VALUES
 ('2024-01-10 10:00:00', 'Approved for vacation', 3),
 ('2024-02-15 14:30:00', 'Sick leave approved', 4);
 
-INSERT INTO Leave_Request (start_date, end_date, comment, status, use_points, employee_id, manager_id, leave_evaluation_id) VALUES 
-('2024-02-01 00:00:00', '2024-02-05 00:00:00', 'Family vacation', 'APPROVED', TRUE, 3, 2, 1),
-('2024-03-10 00:00:00', '2024-03-11 00:00:00', 'Sick leave', 'APPROVED', FALSE, 4, 2, 2),
-('2024-04-15 00:00:00', '2024-04-20 00:00:00', 'Personal time', 'PENDING', TRUE, 5, 2, NULL),
-('2024-05-01 00:00:00', '2024-05-03 00:00:00', 'Conference attendance', 'PENDING', FALSE, 3, 2, NULL);
+INSERT INTO Leave_Request (start_date, end_date, comment, status, use_points, employee_id, manager_id, leave_evaluation_id, creation_date) VALUES
+('2024-02-01 00:00:00', '2024-02-05 00:00:00', 'Family vacation', 'APPROVED', TRUE, 3, 2, 1, '2024-01-15 10:00:00'),
+('2024-03-10 00:00:00', '2024-03-11 00:00:00', 'Sick leave', 'APPROVED', FALSE, 4, 2, 2, '2024-02-15 14:30:00'),
+('2024-04-15 00:00:00', '2024-04-20 00:00:00', 'Personal time', 'PENDING', TRUE, 5, 2, NULL, '2024-04-10 09:00:00'),
+('2024-05-01 00:00:00', '2024-05-03 00:00:00', 'Conference attendance', 'PENDING', FALSE, 3, 2, NULL, '2024-05-01 08:00:00');

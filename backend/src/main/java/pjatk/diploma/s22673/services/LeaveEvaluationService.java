@@ -30,12 +30,19 @@ public class LeaveEvaluationService {
         this.employeeService = employeeService;
     }
 
-    // TODO
+    @Transactional
     public void evaluateRequest(LeaveRequest leaveRequest, String comment) {
-        leaveRequest.setStatus(leaveRequest.getStatus());
         LeaveEvaluation leaveEvaluation = new LeaveEvaluation();
         leaveEvaluation.setComment(comment);
-        leaveEvaluation.setDateOfDecision(Timestamp.valueOf(String.valueOf(LocalDate.now())));
+        leaveEvaluation.setDateOfDecision(new Timestamp(System.currentTimeMillis()));
+
+        Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
+        leaveEvaluation.setEmployee(currentEmployee);
+
+        LeaveEvaluation savedEvaluation = leaveEvaluationRepository.save(leaveEvaluation);
+
+        leaveRequest.setLeaveEvaluation(savedEvaluation);
+        leaveRequestService.save(leaveRequest, leaveRequest.getId());
     }
     
     public List<LeaveEvaluation> findAll() {
@@ -103,8 +110,8 @@ public class LeaveEvaluationService {
             return LeaveRequestStatus.APPROVED;
         }
 
-        LocalDate leaveStart = leaveRequest.getStartDate().toLocalDateTime().toLocalDate();
-        LocalDate leaveEnd = leaveRequest.getEndDate().toLocalDateTime().toLocalDate();
+        LocalDate leaveStart = leaveRequest.getStartDate().toLocalDate();
+        LocalDate leaveEnd = leaveRequest.getEndDate().toLocalDate();
         LocalDate twoWeeksFromNow = LocalDate.now().plusWeeks(2);
 
         for (Project project : projects) {
@@ -152,8 +159,8 @@ public class LeaveEvaluationService {
 
             for (LeaveRequest lr : empLeaveRequests) {
                 if (lr.getStatus() == LeaveRequestStatus.APPROVED) {
-                    LocalDate lrStart = lr.getStartDate().toLocalDateTime().toLocalDate();
-                    LocalDate lrEnd = lr.getEndDate().toLocalDateTime().toLocalDate();
+                    LocalDate lrStart = lr.getStartDate().toLocalDate();
+                    LocalDate lrEnd = lr.getEndDate().toLocalDate();
 
                     if (datesOverlap(leaveStart, leaveEnd, lrStart, lrEnd)) {
                         employeesOnLeave++;
@@ -167,16 +174,13 @@ public class LeaveEvaluationService {
         return percentageOnLeave < 70;
     }
 
-/**
-     * Checks if two date ranges overlap.
-     */
     private boolean datesOverlap(LocalDate start1, LocalDate end1, LocalDate start2, LocalDate end2) {
         return !start1.isAfter(end2) && !start2.isAfter(end1);
     }
 
     private int calculateDays(LeaveRequest leaveRequest) {
-        LocalDate start = leaveRequest.getStartDate().toLocalDateTime().toLocalDate();
-        LocalDate end = leaveRequest.getEndDate().toLocalDateTime().toLocalDate();
+        LocalDate start = leaveRequest.getStartDate().toLocalDate();
+        LocalDate end = leaveRequest.getEndDate().toLocalDate();
 
         return (int) ChronoUnit.DAYS.between(start, end) + 1;
     }

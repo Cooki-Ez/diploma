@@ -22,16 +22,14 @@ public class ViewController {
         return "create-leave";
     }
 
-    @GetMapping("/leaves")
+    @GetMapping("/leaves-view")
     public String leavesPage() {
         return "leaves";
     }
 
-    @GetMapping("/evaluate-leave-request")
-    public String evaluateLeaveRequestPage(@RequestParam(value = "id", required = false) Integer id, Model model) {
-        if (id != null) {
-            model.addAttribute("leaveRequestId", id);
-        }
+    @GetMapping("/evaluate-leave-request/{id}")
+    public String evaluateLeaveRequestPage(@PathVariable Integer id, Model model) {
+        model.addAttribute("leaveRequestId", id);
         return "evaluate-leave-request";
     }
 }
