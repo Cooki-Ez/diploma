@@ -51,8 +51,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/auth/login", "/auth/registration").permitAll()
-                        .requestMatchers("/login", "/create-leave-request", "/create-leave", "/evaluate-leave-request/*", "/leaves-view").permitAll()
+                        .requestMatchers("/auth/login", "/auth/registration", "/login").permitAll()
                         .requestMatchers("/css/**", "/js/**").permitAll()
                         // Employee endpoints - POST, PATCH, DELETE require MANAGER or ADMIN
                         .requestMatchers(HttpMethod.POST, "/employees/**").hasAnyRole("MANAGER", "ADMIN")
