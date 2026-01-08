@@ -42,6 +42,7 @@ public class LeaveEvaluationService {
         LeaveEvaluation savedEvaluation = leaveEvaluationRepository.save(leaveEvaluation);
 
         leaveRequest.setLeaveEvaluation(savedEvaluation);
+        leaveRequest.setManager(currentEmployee);
         leaveRequestService.save(leaveRequest, leaveRequest.getId());
     }
     

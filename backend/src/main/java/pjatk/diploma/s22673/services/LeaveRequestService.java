@@ -53,11 +53,8 @@ public class LeaveRequestService {
 
     @Transactional
     public LeaveRequest save(LeaveRequest leaveRequest) {
-        // Set status to PENDING if not already set
         Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
-        // TODO
         leaveRequest.setEmployee(currentEmployee);
-        leaveRequest.setManager(null);
         if (leaveRequest.getStatus() == null) {
             leaveRequest.setStatus(LeaveRequestStatus.PENDING);
         }
