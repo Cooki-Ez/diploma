@@ -307,8 +307,8 @@ textarea {
 }
 
 .leave-request-item.inactive {
-    background-color: #2a2a2a;
-    opacity: 0.7;
+    background-color: #1f1f1f;
+    opacity: 1;
 }
 
 .loading {
@@ -329,13 +329,14 @@ textarea {
     padding: 16px;
     margin-bottom: 12px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
     border: 1px solid #ccc;
     border-radius: 6px;
 }
 
 .leave-request-item:hover {
     background: #353535;
+    transform: translateY(-2px);
 }
 
 .leave-request-header {

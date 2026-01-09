@@ -63,16 +63,25 @@ public class LeaveRequestController {
         return ResponseEntity.ok(buildLeaveRequestDTO(savedRequest));
     }
 
-    @PatchMapping("/{id}")
+    @RequestMapping(value = "/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<LeaveRequestDTO> update(@PathVariable("id") int id, @RequestBody LeaveRequestUpdateDTO updateDTO) {
         LeaveRequest leaveRequest = leaveRequestService.findOne(id);
 
-        if (updateDTO.getStatus() != null) {
-            leaveRequest.setStatus(updateDTO.getStatus());
-        }
-        if (updateDTO.getComment() != null) {
+        if (updateDTO.getStartDate() != null)
+            leaveRequest.setStartDate(updateDTO.getStartDate().atStartOfDay());
+
+        if (updateDTO.getEndDate() != null)
+            leaveRequest.setEndDate(updateDTO.getEndDate().atStartOfDay());
+
+
+        if (updateDTO.getUsePoints() != null)
+            leaveRequest.setUsePoints(updateDTO.getUsePoints());
+
+        if (updateDTO.getComment() != null)
             leaveRequest.setComment(updateDTO.getComment());
-        }
+
+        if (updateDTO.getStatus() != null)
+            leaveRequest.setStatus(updateDTO.getStatus());
 
         if (updateDTO.getStatus() == LeaveRequestStatus.APPROVED || updateDTO.getStatus() == LeaveRequestStatus.DECLINED) {
             leaveEvaluationService.evaluateRequest(leaveRequest, updateDTO.getComment());

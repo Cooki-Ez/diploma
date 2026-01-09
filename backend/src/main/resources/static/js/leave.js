@@ -180,11 +180,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (title) title.textContent = 'Edit Leave Request';
             if (submitButton) submitButton.textContent = 'Update';
 
-            // In edit mode, we allow changing comment and usePoints;
-            // dates can be shown but disabled if you want to lock them
-            startDateInput.disabled = true;
-            endDateInput.disabled = true;
-
             loadExistingLeave(leaveIdParam);
         }
 
@@ -336,7 +331,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             // -----------------------------
             if (!inactive) {
                 // Evaluate
-                if (isMng || isAdm) {
+                if ((isMng || isAdm) && !owner) {
                     buttons.push(`<button class="btn-evaluate" data-id="${request.id}">Evaluate</button>`);
                 }
 
@@ -435,9 +430,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 : `<div class="no-requests">No pending requests</div>`;
 
             if (!isEmpOnly) {
-                // EMPLOYEE should not see "Other Requests" text
                 html += `<h3>Other Requests</h3>`;
+                html += sortedOthers.length
+                    ? renderRequests(sortedOthers, true)
+                    : `<div class="no-requests">No other requests</div>`;
             }
+
 
             html += sortedOthers.length
                 ? renderRequests(sortedOthers, true)
