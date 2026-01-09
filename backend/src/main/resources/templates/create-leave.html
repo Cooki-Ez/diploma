@@ -47,12 +47,12 @@
 
             <div class="row project">
                 <label>Your project:</label>
-                <div id="projectDisplay">Loading...</div>
+                <div id="projectDisplay" class="project-display">Loading...</div>
             </div>
 
             <div class="row project">
                 <label>Your department:</label>
-                <div id="departmentDisplay">Loading...</div>
+                <div id="departmentDisplay" class="project-display">Loading...</div>
             </div>
 
             <div class="row reasoning">
@@ -61,9 +61,14 @@
             </div>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="noPoints" name="no-points">
-                <label for="noPoints">Request leave without points deducted</label>
+                <label>
+                    <input type="checkbox" id="noPoints" name="no-points">
+                    Request leave without points deducted
+                </label>
             </div>
+
+            <div id="pointsInfo" class="points-info"></div>
+            <div id="pointsError" class="error-message visible" style="display: none;"></div>
 
             <div class="actions">
                 <button type="submit" class="btn request" id="submitLeaveButton">Request</button>

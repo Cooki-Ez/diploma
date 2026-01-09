@@ -160,6 +160,21 @@ textarea {
     margin-bottom: 18px;
 }
 
+.checkbox-row label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.points-info {
+    margin: 8px 0 16px;
+    font-size: 14px;
+    color: #bbb;
+    font-style: italic;
+}
+
 #leaveRequestDetails {
     background: #2a2a2a;
     padding: 16px;
@@ -237,6 +252,7 @@ textarea {
     padding: 12px;
     border-radius: 8px;
     margin-top: 16px;
+    margin-bottom: 16px;
     text-align: center;
     display: none;
 }
@@ -256,7 +272,7 @@ textarea {
     color: #fff;
 }
 
-#projectDisplay {
+.project-display {
     background: #2a2a2a;
     padding: 10px 12px;
     border-radius: 8px;

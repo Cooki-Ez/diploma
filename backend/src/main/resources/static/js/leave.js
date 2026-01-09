@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const title = document.getElementById('leaveFormTitle');
         const submitButton = document.getElementById('submitLeaveButton');
         const hiddenIdInput = document.getElementById('leaveRequestId');
+        const pointsInfo = document.getElementById('pointsInfo');
 
         function showError(msg) {
             errorMessage.textContent = msg;
@@ -137,6 +138,37 @@ document.addEventListener('DOMContentLoaded', async function () {
             successMessage.classList.add('visible');
             errorMessage.classList.remove('visible');
         }
+
+        function updatePointsInfo() {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const noPoints = noPointsCheckbox.checked;
+
+            if (!startDateInput.value || !endDateInput.value || isNaN(startDate) || isNaN(endDate)) {
+                pointsInfo.textContent = '';
+                pointsError.style.display = 'none';
+                return;
+            }
+
+            const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            const balance = currentUser?.points ?? 0;
+
+            if (noPoints) {
+                pointsInfo.textContent = '';
+                pointsError.style.display = 'none';
+            } else {
+                pointsInfo.textContent = `You will lose ${days} point${days > 1 ? 's' : ''} for this leave. Balance: ${balance}.`;
+
+                pointsError.style.display = 'none'; // always hide during typing
+            }
+        }
+
+
+        // Update when dates or checkbox change
+        startDateInput.addEventListener('change', updatePointsInfo);
+        endDateInput.addEventListener('change', updatePointsInfo);
+        noPointsCheckbox.addEventListener('change', updatePointsInfo);
+
 
         // Detect edit mode from query param ?leaveId=...
         const params = new URLSearchParams(window.location.search);
@@ -205,6 +237,24 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
 
+            if (new Date(startDate) > new Date(endDate)) {
+                showError('End date must be after start date');
+                isSubmitting = false;
+                return;
+            }
+
+            const days = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+            const balance = currentUser?.points ?? 0;
+
+            if (!noPointsCheckbox.checked && days > balance) {
+                pointsError.textContent = `You do not have enough points to request this leave. Required: ${days}, Available: ${balance}`;
+                pointsError.style.display = 'block';
+                isSubmitting = false;
+                return;
+            }
+
+
+
             const requestData = {
                 startDate: new Date(startDate).toISOString(),
                 endDate: new Date(endDate).toISOString(),
@@ -227,6 +277,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
 
                 if (response.ok) {
+                    pointsError.style.display = 'none';
                     showSuccess(isEdit ? 'Leave request updated successfully' : 'Leave request submitted successfully');
                     form.reset();
                     setTimeout(() => window.location.href = '/leaves-view', 800);
