@@ -16,7 +16,11 @@
                 <a th:href="@{/admin}">Admin</a>
             </nav>
             <div class="user">
-                <span id="userName">Loading...</span>
+                <div>
+                    <span id="userName">Loading...</span>
+                    <br>
+                    <span id="userDepartment" class="user-department">Loading...</span>
+                </div>
                 <a th:href="@{/auth/logout}">Logout</a>
             </div>
         </div>
@@ -53,6 +57,10 @@
                 <div class="detail-row">
                     <label>Projects:</label>
                     <span id="detailProject"></span>
+                </div>
+                <div class="detail-row">
+                    <label>Department:</label>
+                    <span id="detailDepartment"></span>
                 </div>
                 <div class="detail-row">
                     <label>Reasoning:</label>

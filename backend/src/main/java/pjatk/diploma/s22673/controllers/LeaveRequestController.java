@@ -4,11 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pjatk.diploma.s22673.dto.DepartmentDTO;
 import pjatk.diploma.s22673.dto.EmployeeDTO;
 import pjatk.diploma.s22673.dto.LeaveRequestCreateDTO;
 import pjatk.diploma.s22673.dto.LeaveRequestDTO;
 import pjatk.diploma.s22673.dto.LeaveRequestUpdateDTO;
 import pjatk.diploma.s22673.dto.ProjectDTO;
+import pjatk.diploma.s22673.models.Department;
 import pjatk.diploma.s22673.models.Employee;
 import pjatk.diploma.s22673.models.LeaveRequest;
 import pjatk.diploma.s22673.models.LeaveRequestStatus;
@@ -114,6 +116,14 @@ public class LeaveRequestController {
             employeeDTO.setEmail(leaveRequest.getEmployee().getEmail());
             employeeDTO.setPoints(leaveRequest.getEmployee().getPoints());
 
+            if (leaveRequest.getEmployee().getDepartment() != null) {
+                DepartmentDTO departmentDTO = new DepartmentDTO();
+                departmentDTO.setId(leaveRequest.getEmployee().getDepartment().getId());
+                departmentDTO.setName(leaveRequest.getEmployee().getDepartment().getName());
+                departmentDTO.setLocation(leaveRequest.getEmployee().getDepartment().getLocation());
+                employeeDTO.setDepartment(departmentDTO);
+            }
+
             if (leaveRequest.getEmployee().getProjects() != null && !leaveRequest.getEmployee().getProjects().isEmpty()) {
                 employeeDTO.setProjects(leaveRequest.getEmployee().getProjects().stream()
                         .map(this::convertProjectToDTO)
@@ -127,15 +137,29 @@ public class LeaveRequestController {
             dto.setEvaluationComment(leaveRequest.getLeaveEvaluation().getComment());
 
             if (leaveRequest.getLeaveEvaluation().getEmployee() != null) {
-                EmployeeDTO evaluatorDTO = new EmployeeDTO();
-                evaluatorDTO.setId(leaveRequest.getLeaveEvaluation().getEmployee().getId());
-                evaluatorDTO.setName(leaveRequest.getLeaveEvaluation().getEmployee().getName());
-                evaluatorDTO.setSurname(leaveRequest.getLeaveEvaluation().getEmployee().getSurname());
+                EmployeeDTO evaluatorDTO = getEmployeeDTO(leaveRequest);
+
                 dto.setEvaluatedBy(evaluatorDTO);
             }
         }
 
         return dto;
+    }
+
+    private EmployeeDTO getEmployeeDTO(LeaveRequest leaveRequest) {
+        EmployeeDTO evaluatorDTO = new EmployeeDTO();
+        evaluatorDTO.setId(leaveRequest.getLeaveEvaluation().getEmployee().getId());
+        evaluatorDTO.setName(leaveRequest.getLeaveEvaluation().getEmployee().getName());
+        evaluatorDTO.setSurname(leaveRequest.getLeaveEvaluation().getEmployee().getSurname());
+
+        if (leaveRequest.getLeaveEvaluation().getEmployee().getDepartment() != null) {
+            DepartmentDTO departmentDTO = new DepartmentDTO();
+            departmentDTO.setId(leaveRequest.getLeaveEvaluation().getEmployee().getDepartment().getId());
+            departmentDTO.setName(leaveRequest.getLeaveEvaluation().getEmployee().getDepartment().getName());
+            departmentDTO.setLocation(leaveRequest.getLeaveEvaluation().getEmployee().getDepartment().getLocation());
+            evaluatorDTO.setDepartment(departmentDTO);
+        }
+        return evaluatorDTO;
     }
 
     private ProjectDTO convertProjectToDTO(Project project) {

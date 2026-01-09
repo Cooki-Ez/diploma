@@ -21,10 +21,17 @@ body {
 .leaves-page .form-card {
     width: 100%;
     max-width: 1100px;
-    margin: 24px auto 32px;
+    margin-top: 8px;
+    margin-bottom: 8px;
     padding: 24px;
     border-radius: 8px;
     background: #414141;
+}
+
+.leaves-page .form-card .actions {
+    margin-top: 8px;
+    margin-bottom: 16px;
+    justify-content: center;
 }
 
 .leaves-page .form-card .row {
@@ -80,6 +87,13 @@ h2 {
 
 .user span {
     margin-right: 8px;
+}
+
+.user .user-department {
+    font-size: 12px;
+    color: #000000;
+    margin-top: 2px;
+    display: block;
 }
 
 .user a {
@@ -256,10 +270,28 @@ textarea {
     margin: 0 auto;
 }
 
+.leave-filters {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-start;
+    color: #ddd; font-size: 14px;
+}
 
+.leave-filters label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.leave-filters input[type="checkbox"] {
+    cursor: pointer;
+}
 
 .leave-request-item.inactive {
-    background-color: #000000;
+    background-color: #2a2a2a;
     opacity: 0.7;
 }
 
@@ -276,7 +308,7 @@ textarea {
 }
 
 .leave-request-item {
-    background: #2a2a2a;
+    background: #000000;
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 12px;
@@ -353,6 +385,7 @@ textarea {
 .leave-request-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
 }
 
 .btn-evaluate {
@@ -368,6 +401,51 @@ textarea {
 
 .btn-evaluate:hover {
     background: #5568d3;
+}
+
+.btn-edit {
+    padding: 8px 16px;
+    background: #9e9e9e;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.btn-edit:hover {
+    background: #757575;
+}
+
+.btn-delete {
+    padding: 8px 16px;
+    background: #d32f2f;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.btn-delete:hover {
+    background: #c62828;
+}
+
+.btn-cancel {
+    padding: 8px 16px;
+    background: #ff1744;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #d50000;
 }
 
 .modal-overlay {
@@ -422,5 +500,27 @@ textarea {
 
 .modal-ok-button:hover {
     background: #00a644;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.modal-cancel-button {
+    padding: 10px 32px;
+    background: #ff1744;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.modal-cancel-button:hover {
+    background: #d50000;
 }
 

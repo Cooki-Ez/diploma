@@ -77,10 +77,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 const employee = await response.json();
                 userNameDisplay.textContent = `${employee.name} ${employee.surname}`;
+
+                const userDepartment = document.getElementById('userDepartment');
+                if (userDepartment) {
+                    userDepartment.textContent = employee.department?.name || 'No department';
+                }
             }
         } catch (error) {
             console.error('Error loading current user:', error);
             userNameDisplay.textContent = 'Unknown User';
+            const userDepartment = document.getElementById('userDepartment');
+            if (userDepartment) {
+                userDepartment.textContent = 'No department';
+            }
         }
     }
 
@@ -135,6 +144,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (leaveRequest.evaluationComment) {
                     document.getElementById('detailEvaluationComment').textContent = leaveRequest.evaluationComment;
                     document.getElementById('evaluationCommentRow').style.display = 'flex';
+                }
+
+                if (leaveRequest.employee?.department?.name) {
+                    document.getElementById('detailDepartment').textContent = leaveRequest.employee.department.name;
+                } else {
+                    document.getElementById('detailDepartment').textContent = 'No department';
                 }
 
                 if (leaveRequest.status !== 'PENDING') {

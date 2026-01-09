@@ -56,7 +56,7 @@ public class EmployeeController {
             return ResponseEntity.badRequest().body(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage());
         }
         Employee employee = convertToEmployee(employeeDTO);
-        employeeService.save(employee);
+        employeeService.saveWithDetails(employee, employeeDTO);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 

@@ -15,6 +15,7 @@ import pjatk.diploma.s22673.dto.EmployeeDTO;
 import pjatk.diploma.s22673.models.Employee;
 import pjatk.diploma.s22673.models.EmployeeRole;
 import pjatk.diploma.s22673.security.JWTUtil;
+import pjatk.diploma.s22673.services.EmployeeService;
 import pjatk.diploma.s22673.services.RegistrationService;
 import pjatk.diploma.s22673.util.PersonValidator;
 
@@ -31,15 +32,17 @@ public class AuthController {
     private final JWTUtil jwtUtil;
     private final ModelMapper modelMapper;
     private final AuthenticationManager authenticationManager;
+    private final EmployeeService employeeService;
 
     @Autowired
-    public AuthController(RegistrationService registrationsService, PersonValidator personValidator, JWTUtil jwtUtil, 
-                        ModelMapper modelMapper, AuthenticationManager authenticationManager) {
+    public AuthController(RegistrationService registrationsService, PersonValidator personValidator, JWTUtil jwtUtil,
+                        ModelMapper modelMapper, AuthenticationManager authenticationManager, EmployeeService employeeService) {
         this.registrationsService = registrationsService;
         this.personValidator = personValidator;
         this.jwtUtil = jwtUtil;
         this.modelMapper = modelMapper;
         this.authenticationManager = authenticationManager;
+        this.employeeService = employeeService;
     }
 
     @PostMapping("/login")
@@ -71,7 +74,7 @@ public class AuthController {
             return Map.of("message", Objects.requireNonNull(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage()));
         }
 
-        registrationsService.register(employee);
+        employeeService.saveWithDetails(employee, employeeDTO);
 
         String token = jwtUtil.generateToken(employee.getEmail());
         return Collections.singletonMap("jwt-token", token);

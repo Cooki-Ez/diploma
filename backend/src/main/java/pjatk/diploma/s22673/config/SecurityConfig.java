@@ -53,29 +53,44 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/auth/login", "/auth/registration", "/login").permitAll()
                         .requestMatchers("/css/**", "/js/**").permitAll()
-                        // Employee endpoints - POST, PATCH, DELETE require MANAGER or ADMIN
+
+                        // Allow GET access to HTML pages
+                        .requestMatchers(HttpMethod.GET,
+                                "/create-leave",
+                                "/leaves-view",
+                                "/evaluate-leave-request/**",
+                                "/employees",
+                                "/admin"
+                        ).permitAll()
+
+                        // Employee endpoints
                         .requestMatchers(HttpMethod.POST, "/employees/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/employees/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/employees/**").hasAnyRole("MANAGER", "ADMIN")
-                        // Project endpoints - POST, PATCH, DELETE require MANAGER or ADMIN
+
+                        // Project endpoints
                         .requestMatchers(HttpMethod.POST, "/projects/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/projects/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/projects/**").hasAnyRole("MANAGER", "ADMIN")
-                        // Department endpoints - POST, PATCH, DELETE require MANAGER or ADMIN
+
+                        // Department endpoints
                         .requestMatchers(HttpMethod.POST, "/departments/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/departments/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/departments/**").hasAnyRole("MANAGER", "ADMIN")
-                        // LeaveRequest endpoints - POST allowed for all authenticated users, PATCH, DELETE require MANAGER or ADMIN
+
+                        // Leave endpoints
                         .requestMatchers(HttpMethod.POST, "/leaves/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/leaves/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/leaves/**").hasAnyRole("MANAGER", "ADMIN")
-                        // All other requests require authentication
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
+
 
     @Bean
     public AuthenticationManager authenticationManagerBean(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {

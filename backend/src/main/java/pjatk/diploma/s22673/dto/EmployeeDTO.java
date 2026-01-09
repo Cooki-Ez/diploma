@@ -45,5 +45,7 @@ public class EmployeeDTO {
 
     private Set<EmployeeRole> roles;
 
+    private DepartmentDTO department;
+
     private List<ProjectDTO> projects;
 }

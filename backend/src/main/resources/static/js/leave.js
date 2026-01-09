@@ -1,27 +1,39 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
 
     const form = document.getElementById('leaveForm');
     const leaveRequestsList = document.getElementById('leaveRequestsList');
     const createLeaveButton = document.getElementById('createLeaveButton');
-    const userNameDisplay = document.getElementById('userName');
 
-    let isSubmitting = false; // prevents double save
+    const deleteModalOverlay = document.getElementById('deleteModalOverlay');
+    const deleteCancelButton = document.getElementById('deleteCancelButton');
+    const deleteConfirmButton = document.getElementById('deleteConfirmButton');
+
+    const filtersContainer = document.getElementById('leaveFilters');
+
+    let isSubmitting = false;
+    let currentUser = null;
+    let deleteTargetId = null;
+
+    // filters (used only on leaves list page)
+    let filterMyRequests = false;
+    let filterMyDepartment = false;
+    let allLeaveRequests = [];
 
     function getAuthToken() {
         return localStorage.getItem('jwt-token');
     }
 
     setupLogoutButton();
-    loadCurrentUser();
-
-    if (form) handleLeaveForm();
-    if (leaveRequestsList) handleLeavesList();
+    await loadCurrentUser();
 
     if (createLeaveButton) {
         createLeaveButton.addEventListener('click', () => {
             window.location.href = '/create-leave';
         });
     }
+
+    if (form) handleLeaveForm();
+    if (leaveRequestsList) handleLeavesList();
 
     // -----------------------------------------------------
     // LOGOUT
@@ -31,23 +43,31 @@ document.addEventListener('DOMContentLoaded', function () {
         if (logoutButton) {
             logoutButton.addEventListener('click', function (e) {
                 e.preventDefault();
-                handleLogout();
+                localStorage.removeItem('jwt-token');
+                window.location.href = '/login';
             });
         }
     }
 
-    async function handleLogout() {
-        try {
-            await fetch('/auth/logout', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + getAuthToken() }
-            });
-        } catch (e) {
-            console.error('Logout error:', e);
-        }
-        localStorage.removeItem('jwt-token');
-        window.location.href = '/login';
+    // -----------------------------------------------------
+    // ROLE HELPERS
+    // -----------------------------------------------------
+    function hasRole(roleName) {
+        if (!currentUser || !currentUser.roles) return false;
+        // roles come as ["ADMIN", "EMPLOYEE", ...]
+        return currentUser.roles.includes(roleName);
     }
+
+    function isOwner(request) {
+        return currentUser && request.employee && request.employee.id === currentUser.id;
+    }
+
+    function sameDepartment(request) {
+        const reqDeptId = request?.employee?.department?.id;
+        const userDeptId = currentUser?.department?.id;
+        return reqDeptId != null && userDeptId != null && String(reqDeptId) === String(userDeptId);
+    }
+
 
     // -----------------------------------------------------
     // LOAD CURRENT USER
@@ -58,62 +78,115 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Authorization': 'Bearer ' + getAuthToken() }
             });
 
-            if (response.ok) {
-                const employee = await response.json();
-                userNameDisplay.textContent = employee.name + ' ' + employee.surname;
+            if (!response.ok) return;
+
+            const employee = await response.json();
+            currentUser = employee;
+
+            const userName = document.getElementById('userName');
+            const userDept = document.getElementById('userDepartment');
+
+            if (userName) {
+                userName.textContent = employee.name + ' ' + employee.surname;
             }
+            if (userDept) {
+                userDept.textContent = employee.department?.name || 'No department';
+            }
+
+            const deptDisplay = document.getElementById('departmentDisplay');
+            if (deptDisplay) {
+                deptDisplay.textContent = employee.department?.name || 'No department';
+            }
+
+            const projectDisplay = document.getElementById('projectDisplay');
+            if (projectDisplay) {
+                projectDisplay.textContent =
+                    employee.projects?.length > 0
+                        ? employee.projects.map(p => p.name).join(', ')
+                        : 'No projects assigned';
+            }
+
         } catch (e) {
             console.error('Error loading current user:', e);
-            userNameDisplay.textContent = 'Unknown User';
         }
     }
 
     // -----------------------------------------------------
-    // CREATE LEAVE FORM
+    // CREATE / EDIT LEAVE FORM
     // -----------------------------------------------------
     function handleLeaveForm() {
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
         const commentInput = document.getElementById('comment');
         const noPointsCheckbox = document.getElementById('noPoints');
-        const projectDisplay = document.getElementById('projectDisplay');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
         const cancelButton = document.getElementById('cancelButton');
+        const title = document.getElementById('leaveFormTitle');
+        const submitButton = document.getElementById('submitLeaveButton');
+        const hiddenIdInput = document.getElementById('leaveRequestId');
 
         function showError(msg) {
             errorMessage.textContent = msg;
             errorMessage.classList.add('visible');
             successMessage.classList.remove('visible');
-            setTimeout(() => errorMessage.classList.remove('visible'), 5000);
         }
 
         function showSuccess(msg) {
             successMessage.textContent = msg;
             successMessage.classList.add('visible');
             errorMessage.classList.remove('visible');
-            setTimeout(() => successMessage.classList.remove('visible'), 5000);
         }
 
-        async function loadEmployeeData() {
+        // Detect edit mode from query param ?leaveId=...
+        const params = new URLSearchParams(window.location.search);
+        const leaveIdParam = params.get('leaveId');
+        const isEditMode = !!leaveIdParam;
+
+        if (isEditMode) {
+            hiddenIdInput.value = leaveIdParam;
+            if (title) title.textContent = 'Edit Leave Request';
+            if (submitButton) submitButton.textContent = 'Update';
+
+            // In edit mode, we allow changing comment and usePoints;
+            // dates can be shown but disabled if you want to lock them
+            startDateInput.disabled = true;
+            endDateInput.disabled = true;
+
+            loadExistingLeave(leaveIdParam);
+        }
+
+        async function loadExistingLeave(leaveId) {
             try {
-                const response = await fetch('/employees/current', {
-                    headers: { 'Authorization': 'Bearer ' + getAuthToken() }
+                const response = await fetch(`/leaves/${leaveId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + getAuthToken()
+                    }
                 });
 
-                if (response.ok) {
-                    const employee = await response.json();
-                    userNameDisplay.textContent = employee.name + ' ' + employee.surname;
-
-                    if (employee.projects?.length > 0) {
-                        projectDisplay.textContent = employee.projects.map(p => p.name).join(', ');
-                    } else {
-                        projectDisplay.textContent = 'No projects assigned';
-                    }
+                if (!response.ok) {
+                    showError('Failed to load leave request for editing');
+                    return;
                 }
+
+                const leave = await response.json();
+
+                // Dates from backend are ISO strings; convert to yyyy-MM-dd
+                if (leave.startDate) {
+                    const d = new Date(leave.startDate);
+                    startDateInput.value = d.toISOString().slice(0, 10);
+                }
+                if (leave.endDate) {
+                    const d = new Date(leave.endDate);
+                    endDateInput.value = d.toISOString().slice(0, 10);
+                }
+
+                commentInput.value = leave.comment || '';
+                noPointsCheckbox.checked = !leave.usePoints;
+
             } catch (e) {
-                console.error('Error loading employee data:', e);
-                projectDisplay.textContent = 'No projects assigned';
+                console.error('Error loading leave for edit:', e);
+                showError('Error loading leave request');
             }
         }
 
@@ -125,8 +198,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-            const comment = commentInput.value;
-            const noPoints = noPointsCheckbox.checked;
 
             if (new Date(startDate) > new Date(endDate)) {
                 showError('End date must be after start date');
@@ -137,13 +208,17 @@ document.addEventListener('DOMContentLoaded', function () {
             const requestData = {
                 startDate: new Date(startDate).toISOString(),
                 endDate: new Date(endDate).toISOString(),
-                comment: comment,
-                usePoints: !noPoints
+                comment: commentInput.value,
+                usePoints: !noPointsCheckbox.checked
             };
 
+            const isEdit = !!hiddenIdInput.value;
+            const url = isEdit ? `/leaves/${hiddenIdInput.value}` : '/leaves';
+            const method = isEdit ? 'PUT' : 'POST';
+
             try {
-                const response = await fetch('/leaves', {
-                    method: 'POST',
+                const response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + getAuthToken()
@@ -152,27 +227,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 if (response.ok) {
-                    showSuccess('Leave request submitted successfully');
+                    showSuccess(isEdit ? 'Leave request updated successfully' : 'Leave request submitted successfully');
                     form.reset();
-                    setTimeout(() => window.location.href = '/leaves-view', 1000);
+                    setTimeout(() => window.location.href = '/leaves-view', 800);
                 } else {
                     const error = await response.json();
                     showError(error.message || 'Failed to submit leave request');
                 }
             } catch (e) {
                 showError('An error occurred while submitting the request');
-                console.error(e);
             } finally {
                 isSubmitting = false;
             }
         });
 
         cancelButton.addEventListener('click', () => {
-            form.reset();
             window.location.href = '/leaves-view';
         });
-
-        loadEmployeeData();
     }
 
     // -----------------------------------------------------
@@ -184,28 +255,72 @@ document.addEventListener('DOMContentLoaded', function () {
         function showError(msg) {
             errorMessage.textContent = msg;
             errorMessage.classList.add('visible');
-            setTimeout(() => errorMessage.classList.remove('visible'), 5000);
         }
 
         function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
+            return new Date(dateString).toLocaleDateString('en-GB');
         }
 
         function getStatusClass(status) {
-            switch (status) {
-                case 'APPROVED': return 'status-approved';
-                case 'DECLINED': return 'status-declined';
-                case 'PENDING': return 'status-pending';
-                case 'CANCELLED': return 'status-cancelled';
-                case 'MANUAL': return 'status-manual';
-                default: return '';
-            }
+            return {
+                APPROVED: 'status-approved',
+                DECLINED: 'status-declined',
+                PENDING: 'status-pending',
+                CANCELLED: 'status-cancelled',
+                MANUAL: 'status-manual'
+            }[status] || '';
         }
+
+        function buildActionsHtml(request) {
+            const isEmp = hasRole('EMPLOYEE');
+            const isMng = hasRole('MANAGER');
+            const isAdm = hasRole('ADMIN');
+            const owner = isOwner(request);
+            const inactive = request.status !== 'PENDING';
+
+            let buttons = [];
+
+            // -----------------------------
+            // ACTIVE (PENDING) REQUESTS
+            // -----------------------------
+            if (!inactive) {
+                // Evaluate
+                if (isMng || isAdm) {
+                    buttons.push(`<button class="btn-evaluate" data-id="${request.id}">Evaluate</button>`);
+                }
+
+                // Edit/Delete for owner
+                if (owner) {
+                    buttons.push(`<button class="btn-edit" data-id="${request.id}">Edit</button>`);
+                    buttons.push(`<button class="btn-delete" data-id="${request.id}">Delete</button>`);
+                }
+
+                // EMPLOYEE should not see Evaluate
+                if (isEmp && !isMng && !isAdm) {
+                    buttons = buttons.filter(b => !b.includes('btn-evaluate'));
+                }
+
+                return buttons.join(' ');
+            }
+
+            // -----------------------------
+            // INACTIVE (RESOLVED) REQUESTS
+            // -----------------------------
+            // VIEW button rules:
+            const managerEvaluated = request.manager && request.manager.id === currentUser.id;
+
+            if (owner || managerEvaluated || isAdm) {
+                buttons.push(`<button class="btn-edit" data-id="${request.id}">View</button>`);
+            }
+
+            // DELETE button rules:
+            if (isAdm) {
+                buttons.push(`<button class="btn-delete" data-id="${request.id}">Delete</button>`);
+            }
+
+            return buttons.join(' ');
+        }
+
 
         function renderRequests(requests, isInactive) {
             return requests.map(request => `
@@ -214,17 +329,136 @@ document.addEventListener('DOMContentLoaded', function () {
                         <span class="leave-request-id">#${request.id}</span>
                         <span class="leave-request-status ${getStatusClass(request.status)}">${request.status}</span>
                     </div>
+
                     <div class="leave-request-info">
                         <div class="info-row"><strong>From:</strong> ${formatDate(request.startDate)}</div>
                         <div class="info-row"><strong>To:</strong> ${formatDate(request.endDate)}</div>
                         <div class="info-row"><strong>Comment:</strong> ${request.comment || 'No comment'}</div>
                         <div class="info-row"><strong>Employee:</strong> ${request.employee?.name || ''} ${request.employee?.surname || ''}</div>
+                        <div class="info-row"><strong>Department:</strong> ${request.employee?.department?.name || 'No department'}</div>
                     </div>
+
                     <div class="leave-request-actions">
-                        <button class="btn-evaluate" data-id="${request.id}">Evaluate</button>
+                        ${buildActionsHtml(request)}
                     </div>
                 </div>
             `).join('');
+        }
+
+        function applyFilters(requests) {
+            let result = [...requests];
+
+            if (filterMyRequests && currentUser) {
+                result = result.filter(r => r.employee && r.employee.id === currentUser.id);
+            }
+
+            if (filterMyDepartment && currentUser && currentUser.department) {
+                result = result.filter(r =>
+                    r.employee &&
+                    r.employee.department &&
+                    r.employee.department.id === currentUser.department.id
+                );
+            }
+
+            return result;
+        }
+
+        function renderAll() {
+            const isEmpOnly = hasRole('EMPLOYEE') && !hasRole('MANAGER') && !hasRole('ADMIN');
+
+            const filtered = applyFilters(allLeaveRequests);
+
+            const sortedPending = filtered
+                .filter(r => r.status === 'PENDING')
+                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+            const sortedOthers = filtered
+                .filter(r => r.status !== 'PENDING')
+                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+            let html = '';
+
+            html += `<h3>Pending Requests</h3>`;
+            html += sortedPending.length
+                ? renderRequests(sortedPending, false)
+                : `<div class="no-requests">No pending requests</div>`;
+
+            if (!isEmpOnly) {
+                // EMPLOYEE should not see "Other Requests" text
+                html += `<h3>Other Requests</h3>`;
+            }
+
+            html += sortedOthers.length
+                ? renderRequests(sortedOthers, true)
+                : `<div class="no-requests">No other requests</div>`;
+
+            leaveRequestsList.innerHTML = html;
+
+            // Attach listeners
+            leaveRequestsList.querySelectorAll('.btn-evaluate').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    window.location.href = `/evaluate-leave-request/${id}`;
+                });
+            });
+
+            leaveRequestsList.querySelectorAll('.btn-edit').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    window.location.href = `/create-leave?leaveId=${id}`;
+                });
+            });
+
+            leaveRequestsList.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    deleteTargetId = this.dataset.id;
+                    openDeleteModal();
+                });
+            });
+
+            leaveRequestsList.querySelectorAll('.leave-request-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    // Clicking on empty space of card for managers/admins might navigate to evaluate;
+                    // we keep it simple: only buttons do actions now.
+                });
+            });
+        }
+
+        function setupFilters() {
+            if (!filtersContainer || !currentUser) return;
+
+            const isMng = hasRole('MANAGER');
+            const isAdm = hasRole('ADMIN');
+
+            let html = '';
+
+            if (isMng || isAdm) {
+                html += `<label><input type="checkbox" id="filterMyRequests"> Show my requests only</label>`;
+            }
+            if (isAdm && currentUser.department) {
+                html += `<label><input type="checkbox" id="filterMyDepartment"> Show my department only</label>`;
+            }
+
+            filtersContainer.innerHTML = html;
+
+            const myReqCheckbox = document.getElementById('filterMyRequests');
+            const myDeptCheckbox = document.getElementById('filterMyDepartment');
+
+            if (myReqCheckbox) {
+                myReqCheckbox.addEventListener('change', function () {
+                    filterMyRequests = this.checked;
+                    renderAll();
+                });
+            }
+            if (myDeptCheckbox) {
+                myDeptCheckbox.addEventListener('change', function () {
+                    filterMyDepartment = this.checked;
+                    renderAll();
+                });
+            }
         }
 
         async function loadLeaveRequests() {
@@ -238,44 +472,61 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                const leaveRequests = await response.json();
+                allLeaveRequests = await response.json();
 
-                // SORT newest → oldest
-                const sortedPending = leaveRequests
-                    .filter(r => r.status === 'PENDING')
-                    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-
-                const sortedOthers = leaveRequests
-                    .filter(r => r.status !== 'PENDING')
-                    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-
-                leaveRequestsList.innerHTML = `
-                    <h3>Pending Requests</h3>
-                    ${renderRequests(sortedPending, false)}
-                    <h3>Other Requests</h3>
-                    ${renderRequests(sortedOthers, true)}
-                `;
-
-                document.querySelectorAll('.btn-evaluate').forEach(button => {
-                    button.addEventListener('click', function () {
-                        const id = this.getAttribute('data-id');
-                        window.location.href = `/evaluate-leave-request/${id}`;
-                    });
-                });
-
-                document.querySelectorAll('.leave-request-item').forEach(item => {
-                    item.addEventListener('click', function (e) {
-                        if (!e.target.classList.contains('btn-evaluate')) {
-                            const id = this.getAttribute('data-id');
-                            window.location.href = `/evaluate-leave-request/${id}`;
-                        }
-                    });
-                });
+                setupFilters();
+                renderAll();
 
             } catch (e) {
-                showError('An error occurred while loading leave requests');
                 console.error(e);
+                showError('An error occurred while loading leave requests');
             }
+        }
+
+        // DELETE modal logic
+        function openDeleteModal() {
+            if (deleteModalOverlay) {
+                deleteModalOverlay.classList.add('visible');
+            }
+        }
+
+        function closeDeleteModal() {
+            if (deleteModalOverlay) {
+                deleteModalOverlay.classList.remove('visible');
+            }
+            deleteTargetId = null;
+        }
+
+        if (deleteCancelButton) {
+            deleteCancelButton.addEventListener('click', function () {
+                closeDeleteModal();
+            });
+        }
+
+        if (deleteConfirmButton) {
+            deleteConfirmButton.addEventListener('click', async function () {
+                if (!deleteTargetId) return;
+
+                try {
+                    const response = await fetch(`/leaves/${deleteTargetId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + getAuthToken() }
+                    });
+
+                    if (!response.ok) {
+                        showError('Failed to delete leave request');
+                    } else {
+                        // remove from local list and rerender
+                        allLeaveRequests = allLeaveRequests.filter(r => r.id != deleteTargetId);
+                        renderAll();
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showError('An error occurred while deleting the leave request');
+                } finally {
+                    closeDeleteModal();
+                }
+            });
         }
 
         loadLeaveRequests();

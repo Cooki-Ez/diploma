@@ -1,0 +1,209 @@
+[
+  {
+    "name": "Admin",
+    "surname": "User",
+    "email": "admin@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1985-01-01",
+    "points": 0,
+    "roles": ["ADMIN"],
+    "department": {
+      "id": 1,
+      "name": "IT Department",
+      "location": "Warsaw"
+    },
+    "projects": [
+      {
+        "name": "Admin Dashboard",
+        "description": "Administrative dashboard project",
+        "startDate": "2024-01-01T00:00:00",
+        "endDate": "2024-12-31T00:00:00",
+        "importance": "CRUCIAL"
+      }
+    ]
+  },
+  {
+    "name": "Manager",
+    "surname": "One",
+    "email": "manager1@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1980-03-15",
+    "points": 0,
+    "roles": ["MANAGER"],
+    "department": {
+      "id": 1,
+      "name": "IT Department",
+      "location": "Warsaw"
+    },
+    "projects": [
+      {
+        "name": "Website Redesign",
+        "description": "Redesign company website",
+        "startDate": "2024-01-01T00:00:00",
+        "endDate": "2024-06-30T00:00:00",
+        "importance": "CRUCIAL"
+      }
+    ]
+  },
+  {
+    "name": "Manager",
+    "surname": "Two",
+    "email": "manager2@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1982-06-20",
+    "points": 0,
+    "roles": ["MANAGER"],
+    "department": {
+      "id": 1,
+      "name": "IT Department",
+      "location": "Warsaw"
+    },
+    "projects": [
+      {
+        "name": "Mobile App Development",
+        "description": "Develop mobile application",
+        "startDate": "2024-02-15T00:00:00",
+        "endDate": "2024-12-31T00:00:00",
+        "importance": "IMPORTANT"
+      }
+    ]
+  },
+  {
+    "name": "Employee",
+    "surname": "One",
+    "email": "employee1@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1990-02-10",
+    "points": 0,
+    "roles": ["EMPLOYEE"],
+    "department": {
+      "id": 1,
+      "name": "IT Department",
+      "location": "Warsaw"
+    },
+    "projects": [
+      {
+        "name": "Internal Tools",
+        "description": "Update internal tools",
+        "startDate": "2024-03-01T00:00:00",
+        "endDate": "2024-08-15T00:00:00",
+        "importance": "MODERATE"
+      }
+    ]
+  },
+  {
+    "name": "Employee",
+    "surname": "Two",
+    "email": "employee2@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1992-05-25",
+    "points": 0,
+    "roles": ["EMPLOYEE"],
+    "department": {
+      "id": 1,
+      "name": "IT Department",
+      "location": "Warsaw"
+    },
+    "projects": [
+      {
+        "name": "Testing Suite",
+        "description": "Automated testing suite",
+        "startDate": "2024-04-01T00:00:00",
+        "endDate": "2024-09-30T00:00:00",
+        "importance": "IMPORTANT"
+      }
+    ]
+  },
+  {
+    "name": "Manager",
+    "surname": "Three",
+    "email": "manager3@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1978-09-30",
+    "points": 0,
+    "roles": ["MANAGER"],
+    "department": {
+      "id": 2,
+      "name": "HR Department",
+      "location": "Krakow"
+    },
+    "projects": [
+      {
+        "name": "HR System",
+        "description": "Upgrade HR management system",
+        "startDate": "2024-04-01T00:00:00",
+        "endDate": "2024-09-30T00:00:00",
+        "importance": "IMPORTANT"
+      }
+    ]
+  },
+  {
+    "name": "Manager",
+    "surname": "Four",
+    "email": "manager4@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1981-12-05",
+    "points": 0,
+    "roles": ["MANAGER"],
+    "department": {
+      "id": 2,
+      "name": "HR Department",
+      "location": "Krakow"
+    },
+    "projects": [
+      {
+        "name": "Recruitment Portal",
+        "description": "Online recruitment platform",
+        "startDate": "2024-05-01T00:00:00",
+        "endDate": "2024-10-31T00:00:00",
+        "importance": "CRUCIAL"
+      }
+    ]
+  },
+  {
+    "name": "Employee",
+    "surname": "Three",
+    "email": "employee3@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1993-04-15",
+    "points": 0,
+    "roles": ["EMPLOYEE"],
+    "department": {
+      "id": 2,
+      "name": "HR Department",
+      "location": "Krakow"
+    },
+    "projects": [
+      {
+        "name": "Employee Portal",
+        "description": "Self-service employee portal",
+        "startDate": "2024-06-01T00:00:00",
+        "endDate": "2024-11-30T00:00:00",
+        "importance": "MODERATE"
+      }
+    ]
+  },
+  {
+    "name": "Employee",
+    "surname": "Four",
+    "email": "employee4@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1994-08-20",
+    "points": 0,
+    "roles": ["EMPLOYEE"],
+    "department": {
+      "id": 2,
+      "name": "HR Department",
+      "location": "Krakow"
+    },
+    "projects": [
+      {
+        "name": "Payroll System",
+        "description": "Automated payroll processing",
+        "startDate": "2024-07-01T00:00:00",
+        "endDate": "2024-12-31T00:00:00",
+        "importance": "CRUCIAL"
+      }
+    ]
+  }
+]
