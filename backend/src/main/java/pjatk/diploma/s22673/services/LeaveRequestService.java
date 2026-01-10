@@ -95,32 +95,6 @@ public class LeaveRequestService {
     }
 
     @Transactional
-    public List<LeaveRequest> saveBatch(List<LeaveRequestCreateDTO> createDTOs) {
-        List<LeaveRequest> savedRequests = new java.util.ArrayList<>();
-        for (pjatk.diploma.s22673.dto.LeaveRequestCreateDTO createDTO : createDTOs) {
-            LeaveRequest leaveRequest = new LeaveRequest();
-            leaveRequest.setStartDate(createDTO.getStartDate());
-            leaveRequest.setEndDate(createDTO.getEndDate());
-            leaveRequest.setComment(createDTO.getComment());
-            leaveRequest.setUsePoints(createDTO.isUsePoints());
-            leaveRequest.setStatus(LeaveRequestStatus.PENDING);
-            leaveRequest.setLeaveEvaluation(null);
-
-            if (createDTO.getEmployeeId() != null) {
-                Employee employee = employeeService.findOne(createDTO.getEmployeeId());
-                leaveRequest.setEmployee(employee);
-            } else {
-                Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
-                leaveRequest.setEmployee(currentEmployee);
-            }
-
-            LeaveRequest savedRequest = leaveRequestRepository.save(leaveRequest);
-            savedRequests.add(savedRequest);
-        }
-        return savedRequests;
-    }
-
-    @Transactional
     public void delete(int id) {
         leaveRequestRepository.deleteById(id);
     }

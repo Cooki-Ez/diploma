@@ -10,12 +10,9 @@ import pjatk.diploma.s22673.dto.LeaveRequestCreateDTO;
 import pjatk.diploma.s22673.dto.LeaveRequestDTO;
 import pjatk.diploma.s22673.dto.LeaveRequestUpdateDTO;
 import pjatk.diploma.s22673.dto.ProjectDTO;
-import pjatk.diploma.s22673.models.Department;
-import pjatk.diploma.s22673.models.Employee;
 import pjatk.diploma.s22673.models.LeaveRequest;
 import pjatk.diploma.s22673.models.LeaveRequestStatus;
 import pjatk.diploma.s22673.models.Project;
-import pjatk.diploma.s22673.services.EmployeeService;
 import pjatk.diploma.s22673.services.LeaveEvaluationService;
 import pjatk.diploma.s22673.services.LeaveRequestService;
 
@@ -26,13 +23,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/leaves")
 public class LeaveRequestController {
     private final LeaveRequestService leaveRequestService;
-    private final EmployeeService employeeService;
     private final LeaveEvaluationService leaveEvaluationService;
 
     @Autowired
-    public LeaveRequestController(LeaveRequestService leaveRequestService, EmployeeService employeeService, LeaveEvaluationService leaveEvaluationService) {
+    public LeaveRequestController(LeaveRequestService leaveRequestService, LeaveEvaluationService leaveEvaluationService) {
         this.leaveRequestService = leaveRequestService;
-        this.employeeService = employeeService;
         this.leaveEvaluationService = leaveEvaluationService;
     }
 
@@ -61,15 +56,6 @@ public class LeaveRequestController {
 
         LeaveRequest savedRequest = leaveRequestService.save(leaveRequest);
         return ResponseEntity.ok(buildLeaveRequestDTO(savedRequest));
-    }
-
-    @PostMapping("/batch")
-    public ResponseEntity<List<LeaveRequestDTO>> createBatch(@RequestBody List<LeaveRequestCreateDTO> createDTOs) {
-        List<LeaveRequest> savedRequests = leaveRequestService.saveBatch(createDTOs);
-        List<LeaveRequestDTO> savedRequestDTOs = savedRequests.stream()
-                .map(this::buildLeaveRequestDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(savedRequestDTOs);
     }
 
     @RequestMapping(value = "/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})
