@@ -63,6 +63,15 @@ public class LeaveRequestController {
         return ResponseEntity.ok(buildLeaveRequestDTO(savedRequest));
     }
 
+    @PostMapping("/batch")
+    public ResponseEntity<List<LeaveRequestDTO>> createBatch(@RequestBody List<LeaveRequestCreateDTO> createDTOs) {
+        List<LeaveRequest> savedRequests = leaveRequestService.saveBatch(createDTOs);
+        List<LeaveRequestDTO> savedRequestDTOs = savedRequests.stream()
+                .map(this::buildLeaveRequestDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(savedRequestDTOs);
+    }
+
     @RequestMapping(value = "/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<LeaveRequestDTO> update(@PathVariable("id") int id, @RequestBody LeaveRequestUpdateDTO updateDTO) {
         LeaveRequest leaveRequest = leaveRequestService.findOne(id);

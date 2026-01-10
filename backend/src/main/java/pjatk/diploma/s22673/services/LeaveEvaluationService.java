@@ -83,7 +83,7 @@ public class LeaveEvaluationService {
                 leaveRequestService.save(leaveRequest, leaveRequest.getId());
                 continue;
             }
-            
+
             int daysRequested = calculateDays(leaveRequest);
             Employee employee = leaveRequest.getEmployee();
             if(employee.getPoints() < daysRequested) {
@@ -96,8 +96,43 @@ public class LeaveEvaluationService {
                 }
                 leaveRequest.setStatus(status);
             }
+
+            // Create evaluation with System employee
+            createSystemEvaluation(leaveRequest);
+
             leaveRequestService.save(leaveRequest, leaveRequest.getId());
         }
+    }
+
+    @Transactional
+    public void createSystemEvaluation(LeaveRequest leaveRequest) {
+        LeaveEvaluation leaveEvaluation = new LeaveEvaluation();
+        leaveEvaluation.setDateOfDecision(new Timestamp(System.currentTimeMillis()));
+
+        String comment;
+        if (leaveRequest.getStatus() == LeaveRequestStatus.APPROVED) {
+            comment = "Auto-approved: Sufficient points and no project constraints";
+        } else if (leaveRequest.getStatus() == LeaveRequestStatus.DECLINED_S) {
+            comment = "Auto-declined: Insufficient leave points";
+        } else if (leaveRequest.getStatus() == LeaveRequestStatus.MANUAL) {
+            comment = "Manual review required: Leave without points or project constraints";
+        } else {
+            comment = "Auto-evaluated: " + leaveRequest.getStatus().toString();
+        }
+        leaveEvaluation.setComment(comment);
+
+        // Get System employee
+        Employee systemEmployee = getSystemEmployee();
+        leaveEvaluation.setEmployee(systemEmployee);
+
+        LeaveEvaluation savedEvaluation = leaveEvaluationRepository.save(leaveEvaluation);
+        leaveRequest.setLeaveEvaluation(savedEvaluation);
+        leaveRequest.setManager(systemEmployee);
+    }
+
+    private Employee getSystemEmployee() {
+        return employeeService.findByEmail("system@example.com")
+                .orElseThrow(() -> new RuntimeException("System employee not found. Please register system@example.com"));
     }
 
 /**
