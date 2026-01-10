@@ -7,65 +7,82 @@
 </head>
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <header class="top-bar">
-            <div class="company">Unknown Ltd.</div>
-            <nav class="nav-tabs">
-                <a href="/employees.html">Employees</a>
-                <a href="/leaves.html" class="active">Leaves</a>
-                <a href="/admin.html">Admin</a>
-            </nav>
-            <div class="user">
+    <header class="top-bar">
+        <div class="company">Unknown Ltd.</div>
+        <nav class="nav-tabs">
+            <a href="/employees">Employees</a>
+            <a href="/leaves-view" class="active">Leaves</a>
+            <a href="/admin">Admin</a>
+        </nav>
+        <div class="user">
+            <div>
                 <span id="userName">Loading...</span>
-                <a href="#" id="logoutButton">Logout</a>
+                <br>
+                <span id="userDepartment" class="user-department">Loading...</span>
             </div>
-        </header>
-
-        <div class="form-card">
-            <h2>Create Leave Request</h2>
-
-            <form id="leaveForm">
-                <div class="date-row">
-                    <div>
-                        <label for="startDate">From:</label>
-                        <input type="date" id="startDate" name="startDate">
-                    </div>
-                    <div>
-                        <label for="endDate">To:</label>
-                        <input type="date" id="endDate" name="endDate">
-                    </div>
-                </div>
-
-                <div class="row project">
-                    <label>Your project:</label>
-                    <div id="projectDisplay">Loading...</div>
-                </div>
-
-                <div class="row reasoning">
-                    <label>Reasoning:</label>
-                    <textarea id="comment" rows="5" placeholder="Type reason" required></textarea>
-                </div>
-
-                <div class="checkbox-row">
-                    <input type="checkbox" id="noPoints" name="no-points">
-                    <label for="noPoints">Request leave without points deducted</label>
-                </div>
-
-                <div class="actions">
-                    <button type="submit" class="btn request">Request</button>
-                    <button type="button" class="btn cancel" id="cancelButton">Cancel</button>
-                </div>
-
-            </form>
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
+            <a href="/auth/logout">Logout</a>
         </div>
+    </header>
 
+    <div class="form-card">
+        <h2 id="leaveFormTitle">Create Leave Request</h2>
+
+        <form id="leaveForm">
+            <!-- hidden id used in edit mode -->
+            <input type="hidden" id="leaveRequestId" name="leaveRequestId">
+
+            <div class="date-row">
+                <div>
+                    <label for="startDate">From:</label>
+                    <input type="date" id="startDate" name="startDate">
+                </div>
+                <div>
+                    <label for="endDate">To:</label>
+                    <input type="date" id="endDate" name="endDate">
+                </div>
+            </div>
+
+            <div class="row project">
+                <label>Your project:</label>
+                <div id="projectDisplay" class="project-display">Loading...</div>
+            </div>
+
+            <div class="row project">
+                <label>Your department:</label>
+                <div id="departmentDisplay" class="project-display">Loading...</div>
+            </div>
+
+            <div class="row reasoning">
+                <label>Reasoning:</label>
+                <textarea id="comment" rows="5" placeholder="Type reason" required></textarea>
+            </div>
+
+            <div class="checkbox-row">
+                <label>
+                    <input type="checkbox" id="noPoints" name="no-points">
+                    Request leave without points deducted
+                </label>
+            </div>
+
+            <div id="pointsInfo" class="points-info"></div>
+
+            <div class="actions">
+                <button type="submit" class="btn request" id="submitLeaveButton">Request</button>
+                <button type="button" class="btn cancel" id="cancelButton">Cancel</button>
+            </div>
+
+            <div id="pointsError" class="error-message visible" style="display: none;"></div>
+        </form>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
     </div>
 
-    <script src="/js/login.js"></script>
+</div>
+
+<script src="/js/leave.js"></script>
 
 </body>
-
 </html>

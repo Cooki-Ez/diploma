@@ -11,13 +11,17 @@
         <div class="top-bar">
             <div class="company">Unknown Ltd.</div>
             <nav class="nav-tabs">
-                <a href="/employees.html">Employees</a>
-                <a href="/leaves.html" class="active">Leaves</a>
-                <a href="/admin.html">Admin</a>
+                <a href="/employees">Employees</a>
+                <a href="/leaves-view" class="active">Leaves</a>
+                <a href="/admin">Admin</a>
             </nav>
             <div class="user">
-                <span id="userName">Loading...</span>
-                <a href="#" id="logoutButton">Logout</a>
+                <div>
+                    <span id="userName">Loading...</span>
+                    <br>
+                    <span id="userDepartment" class="user-department">Loading...</span>
+                </div>
+                <a href="/auth/logout">Logout</a>
             </div>
         </div>
 
@@ -53,6 +57,10 @@
                 <div class="detail-row">
                     <label>Projects:</label>
                     <span id="detailProject"></span>
+                </div>
+                <div class="detail-row">
+                    <label>Department:</label>
+                    <span id="detailDepartment"></span>
                 </div>
                 <div class="detail-row">
                     <label>Reasoning:</label>

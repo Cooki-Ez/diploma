@@ -51,7 +51,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/auth/login", "/auth/registration", "/login").permitAll()
+                        .requestMatchers("/auth/**", "/login").permitAll()
                         .requestMatchers("/css/**", "/js/**").permitAll()
 
                         // Allow GET access to HTML pages

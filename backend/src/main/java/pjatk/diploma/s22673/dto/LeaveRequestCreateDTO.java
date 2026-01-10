@@ -22,4 +22,5 @@ public class LeaveRequestCreateDTO {
 
     private boolean usePoints = true;
 
+    private Integer employeeId;
 }

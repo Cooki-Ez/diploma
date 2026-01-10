@@ -3,6 +3,7 @@ package pjatk.diploma.s22673.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pjatk.diploma.s22673.dto.LeaveRequestCreateDTO;
 import pjatk.diploma.s22673.exceptions.LeaveRequestDoesNotExistException;
 import pjatk.diploma.s22673.models.Employee;
 import pjatk.diploma.s22673.models.EmployeeRole;
@@ -66,6 +67,57 @@ public class LeaveRequestService {
     public LeaveRequest save(LeaveRequest leaveRequest, int id) {
         leaveRequest.setId(id);
         return leaveRequestRepository.save(leaveRequest);
+    }
+
+    @Transactional
+    public LeaveRequest saveForEmployee(LeaveRequest leaveRequest, int employeeId) {
+        Employee employee = employeeService.findOne(employeeId);
+        leaveRequest.setEmployee(employee);
+        if (leaveRequest.getStatus() == null) {
+            leaveRequest.setStatus(LeaveRequestStatus.PENDING);
+        }
+        leaveRequest.setLeaveEvaluation(null);
+        return leaveRequestRepository.save(leaveRequest);
+    }
+
+    @Transactional
+    public List<LeaveRequest> saveAll(List<LeaveRequest> leaveRequests) {
+        for (LeaveRequest leaveRequest : leaveRequests) {
+            Employee employee = employeeService.findOne(leaveRequest.getEmployee().getId());
+            leaveRequest.setEmployee(employee);
+            if (leaveRequest.getStatus() == null) {
+                leaveRequest.setStatus(LeaveRequestStatus.PENDING);
+            }
+            leaveRequest.setLeaveEvaluation(null);
+            leaveRequestRepository.save(leaveRequest);
+        }
+        return leaveRequests;
+    }
+
+    @Transactional
+    public List<LeaveRequest> saveBatch(List<LeaveRequestCreateDTO> createDTOs) {
+        List<LeaveRequest> savedRequests = new java.util.ArrayList<>();
+        for (pjatk.diploma.s22673.dto.LeaveRequestCreateDTO createDTO : createDTOs) {
+            LeaveRequest leaveRequest = new LeaveRequest();
+            leaveRequest.setStartDate(createDTO.getStartDate());
+            leaveRequest.setEndDate(createDTO.getEndDate());
+            leaveRequest.setComment(createDTO.getComment());
+            leaveRequest.setUsePoints(createDTO.isUsePoints());
+            leaveRequest.setStatus(LeaveRequestStatus.PENDING);
+            leaveRequest.setLeaveEvaluation(null);
+
+            if (createDTO.getEmployeeId() != null) {
+                Employee employee = employeeService.findOne(createDTO.getEmployeeId());
+                leaveRequest.setEmployee(employee);
+            } else {
+                Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
+                leaveRequest.setEmployee(currentEmployee);
+            }
+
+            LeaveRequest savedRequest = leaveRequestRepository.save(leaveRequest);
+            savedRequests.add(savedRequest);
+        }
+        return savedRequests;
     }
 
     @Transactional
