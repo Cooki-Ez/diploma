@@ -78,11 +78,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/departments/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/departments/**").hasAnyRole("MANAGER", "ADMIN")
 
-                        // Leave endpoints
-                        .requestMatchers(HttpMethod.POST, "/leaves/**").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/leaves/**").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/leaves/**").hasAnyRole("MANAGER", "ADMIN")
-
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

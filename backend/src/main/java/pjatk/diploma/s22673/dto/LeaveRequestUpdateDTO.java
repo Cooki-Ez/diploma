@@ -10,14 +10,18 @@ import java.time.LocalDate;
 
 @Setter
 @Getter
-@jakarta.validation.constraints.NotNull
 public class LeaveRequestUpdateDTO {
     private LocalDate startDate;
     private LocalDate endDate;
+
     @NotNull(message = "Status is required")
     private LeaveRequestStatus status;
-    private Boolean usePoints;
-    @Size(max = 255, message = "Comment should be less than 255 characters")
-    private String comment;
 
+    private Boolean usePoints;
+
+    @Size(max = 255)
+    private String employeeComment;
+
+    @Size(max = 255)
+    private String evaluationComment;
 }

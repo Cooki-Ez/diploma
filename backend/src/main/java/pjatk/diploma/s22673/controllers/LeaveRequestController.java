@@ -10,12 +10,15 @@ import pjatk.diploma.s22673.dto.LeaveRequestCreateDTO;
 import pjatk.diploma.s22673.dto.LeaveRequestDTO;
 import pjatk.diploma.s22673.dto.LeaveRequestUpdateDTO;
 import pjatk.diploma.s22673.dto.ProjectDTO;
+import pjatk.diploma.s22673.models.Employee;
 import pjatk.diploma.s22673.models.LeaveRequest;
 import pjatk.diploma.s22673.models.LeaveRequestStatus;
 import pjatk.diploma.s22673.models.Project;
+import pjatk.diploma.s22673.services.EmployeeService;
 import pjatk.diploma.s22673.services.LeaveEvaluationService;
 import pjatk.diploma.s22673.services.LeaveRequestService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,11 +27,13 @@ import java.util.stream.Collectors;
 public class LeaveRequestController {
     private final LeaveRequestService leaveRequestService;
     private final LeaveEvaluationService leaveEvaluationService;
+    private final EmployeeService employeeService;
 
     @Autowired
-    public LeaveRequestController(LeaveRequestService leaveRequestService, LeaveEvaluationService leaveEvaluationService) {
+    public LeaveRequestController(LeaveRequestService leaveRequestService, LeaveEvaluationService leaveEvaluationService, EmployeeService employeeService) {
         this.leaveRequestService = leaveRequestService;
         this.leaveEvaluationService = leaveEvaluationService;
+        this.employeeService = employeeService;
     }
 
     @GetMapping("/all")
@@ -46,20 +51,39 @@ public class LeaveRequestController {
         return ResponseEntity.ok(buildLeaveRequestDTO(leaveRequest));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<LeaveRequestDTO>> getEmployeeLeaves() {
+        Employee current = employeeService.getCurrentLoggedInEmployee();
+        List<LeaveRequest> requests = leaveRequestService.findByEmployee(current);
+
+        List<LeaveRequestDTO> dtos = requests.stream()
+                .map(this::buildLeaveRequestDTO)
+                .toList();
+
+        return ResponseEntity.ok(dtos);
+    }
+
+
     @PostMapping
     public ResponseEntity<LeaveRequestDTO> create(@RequestBody LeaveRequestCreateDTO createDTO) {
         LeaveRequest leaveRequest = new LeaveRequest();
-        leaveRequest.setStartDate(createDTO.getStartDate());
-        leaveRequest.setEndDate(createDTO.getEndDate());
-        leaveRequest.setComment(createDTO.getComment());
-        leaveRequest.setUsePoints(createDTO.isUsePoints());
+        if (createDTO.getStartDate() != null)
+            leaveRequest.setStartDate(createDTO.getStartDate().atStartOfDay());
+        if (createDTO.getEndDate() != null)
+            leaveRequest.setEndDate(createDTO.getEndDate().atStartOfDay());
+        leaveRequest.setComment(createDTO.getEmployeeComment());
+        leaveRequest.setUsePoints(createDTO.getUsePoints() != null ? createDTO.getUsePoints() : true);
+        leaveRequest.setCreationDate(LocalDateTime.now());
+        leaveRequest.setStatus(LeaveRequestStatus.PENDING);
 
         LeaveRequest savedRequest = leaveRequestService.save(leaveRequest);
         return ResponseEntity.ok(buildLeaveRequestDTO(savedRequest));
     }
 
-    @RequestMapping(value = "/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})
-    public ResponseEntity<LeaveRequestDTO> update(@PathVariable("id") int id, @RequestBody LeaveRequestUpdateDTO updateDTO) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<LeaveRequestDTO> update(@PathVariable("id") int id,
+                                                  @RequestBody LeaveRequestUpdateDTO updateDTO) {
+
         LeaveRequest leaveRequest = leaveRequestService.findOne(id);
 
         if (updateDTO.getStartDate() != null)
@@ -68,25 +92,27 @@ public class LeaveRequestController {
         if (updateDTO.getEndDate() != null)
             leaveRequest.setEndDate(updateDTO.getEndDate().atStartOfDay());
 
-
         if (updateDTO.getUsePoints() != null)
             leaveRequest.setUsePoints(updateDTO.getUsePoints());
 
-        if (updateDTO.getComment() != null)
-            leaveRequest.setComment(updateDTO.getComment());
+        if (leaveRequest.getStatus() == LeaveRequestStatus.PENDING &&
+                updateDTO.getEmployeeComment() != null) {
+            leaveRequest.setComment(updateDTO.getEmployeeComment());
+        }
 
         if (updateDTO.getStatus() != null)
             leaveRequest.setStatus(updateDTO.getStatus());
 
-        if (updateDTO.getStatus() == LeaveRequestStatus.APPROVED || updateDTO.getStatus() == LeaveRequestStatus.DECLINED) {
-            leaveEvaluationService.evaluateRequest(leaveRequest, updateDTO.getComment());
-        } else {
-            leaveRequestService.save(leaveRequest, id);
+        if (updateDTO.getStatus() == LeaveRequestStatus.APPROVED ||
+                updateDTO.getStatus() == LeaveRequestStatus.DECLINED) {
+            leaveEvaluationService.evaluateRequest(leaveRequest, updateDTO.getEvaluationComment());
+            return ResponseEntity.ok(buildLeaveRequestDTO(leaveRequest));
         }
 
-        LeaveRequest updatedRequest = leaveRequestService.findOne(id);
-        return ResponseEntity.ok(buildLeaveRequestDTO(updatedRequest));
+        leaveRequestService.save(leaveRequest, id);
+        return ResponseEntity.ok(buildLeaveRequestDTO(leaveRequest));
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteById(@PathVariable("id") int id) {
@@ -135,6 +161,11 @@ public class LeaveRequestController {
             }
 
             dto.setEmployee(employeeDTO);
+        }
+
+        if (leaveRequest.getManager() != null) {
+            dto.setManagerName(leaveRequest.getManager().getName());
+            dto.setManagerSurname(leaveRequest.getManager().getSurname());
         }
 
         if (leaveRequest.getLeaveEvaluation() != null) {

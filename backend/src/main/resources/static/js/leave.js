@@ -18,6 +18,25 @@ document.addEventListener('DOMContentLoaded', async function () {
     let filterMyRequests = false;
     let filterMyDepartment = false;
     let allLeaveRequests = [];
+    let myLeaveRequests = [];
+
+    function datesOverlap(start1, end1, start2, end2) {
+        return start1 < end2 && start2 < end1;
+    }
+
+    function hasOverlappingRequest(startDate, endDate) {
+        const hiddenIdInput = document.getElementById('leaveRequestId');
+        const currentId = hiddenIdInput ? Number(hiddenIdInput.value) : null;
+
+        return myLeaveRequests.some(req => {
+            if (currentId && req.id === currentId) {
+                return false;
+            }
+            const reqStart = new Date(req.startDate);
+            const reqEnd = new Date(req.endDate);
+            return datesOverlap(startDate, endDate, reqStart, reqEnd);
+        });
+    }
 
     function getAuthToken() {
         return localStorage.getItem('jwt-token');
@@ -32,12 +51,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
-    if (form) handleLeaveForm();
+    if (form) {
+        await loadCurrentUser();
+
+        const myResp = await fetch('/leaves/my', {
+            headers: { 'Authorization': 'Bearer ' + getAuthToken() }
+        });
+        if (myResp.ok) {
+            myLeaveRequests = await myResp.json();
+        }
+
+        await handleLeaveForm();
+    }
+
     if (leaveRequestsList) handleLeavesList();
 
-    // -----------------------------------------------------
-    // LOGOUT
-    // -----------------------------------------------------
     function setupLogoutButton() {
         const logoutButton = document.querySelector('a[href="/auth/logout"]');
         if (logoutButton) {
@@ -49,12 +77,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // -----------------------------------------------------
-    // ROLE HELPERS
-    // -----------------------------------------------------
     function hasRole(roleName) {
         if (!currentUser || !currentUser.roles) return false;
-        // roles come as ["ADMIN", "EMPLOYEE", ...]
         return currentUser.roles.includes(roleName);
     }
 
@@ -67,7 +91,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         const userDeptId = currentUser?.department?.id;
         return reqDeptId != null && userDeptId != null && String(reqDeptId) === String(userDeptId);
     }
-
 
     // -----------------------------------------------------
     // LOAD CURRENT USER
@@ -112,9 +135,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // -----------------------------------------------------
-    // CREATE / EDIT LEAVE FORM
+    // WORKING DAYS CALCULATOR (Mon–Fri only)
     // -----------------------------------------------------
-    function handleLeaveForm() {
+    function calculateWorkingDays(startDate, endDate) {
+        let count = 0;
+        let date = new Date(startDate);
+
+        while (date <= endDate) {
+            const day = date.getDay(); // 0=Sun, 6=Sat
+            if (day !== 0 && day !== 6) {
+                count++;
+            }
+            date.setDate(date.getDate() + 1);
+        }
+        return count;
+    }
+
+    async function handleLeaveForm() {
+        await loadCurrentUser();
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
         const commentInput = document.getElementById('comment');
@@ -126,6 +164,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         const submitButton = document.getElementById('submitLeaveButton');
         const hiddenIdInput = document.getElementById('leaveRequestId');
         const pointsInfo = document.getElementById('pointsInfo');
+        const pointsError = document.getElementById('pointsError');
+        let isEvaluated = false;
 
         function showError(msg) {
             errorMessage.textContent = msg;
@@ -140,6 +180,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         function updatePointsInfo() {
+            if (isEvaluated) {
+                pointsInfo.textContent = '';
+                pointsError.style.display = 'none';
+                errorMessage.classList.remove('visible');
+                return;
+            }
+
+            errorMessage.classList.remove('visible');
+            pointsError.style.display = 'none';
+            successMessage.classList.remove('visible');
+
             const startDate = new Date(startDateInput.value);
             const endDate = new Date(endDateInput.value);
             const noPoints = noPointsCheckbox.checked;
@@ -150,7 +201,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
 
-            const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            if (hasOverlappingRequest(startDate, endDate)) {
+                errorMessage.textContent = 'You already have a leave request during these dates.';
+                errorMessage.classList.add('visible');
+                return;
+            }
+
+            const days = calculateWorkingDays(startDate, endDate);
             const balance = currentUser?.points ?? 0;
 
             if (noPoints) {
@@ -158,19 +215,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                 pointsError.style.display = 'none';
             } else {
                 pointsInfo.textContent = `You will lose ${days} point${days > 1 ? 's' : ''} for this leave. Balance: ${balance}.`;
-
-                pointsError.style.display = 'none'; // always hide during typing
+                pointsError.style.display = 'none';
             }
         }
 
-
-        // Update when dates or checkbox change
         startDateInput.addEventListener('change', updatePointsInfo);
         endDateInput.addEventListener('change', updatePointsInfo);
         noPointsCheckbox.addEventListener('change', updatePointsInfo);
 
-
-        // Detect edit mode from query param ?leaveId=...
         const params = new URLSearchParams(window.location.search);
         const leaveIdParam = params.get('leaveId');
         const isEditMode = !!leaveIdParam;
@@ -185,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         async function loadExistingLeave(leaveId) {
             try {
-                const response = await fetch(`/leaves/${leaveId}`, {
+                const response = await fetch(`/leaves/${leaveId}?t=${Date.now()}`, {
                     headers: {
                         'Authorization': 'Bearer ' + getAuthToken()
                     }
@@ -198,18 +250,54 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 const leave = await response.json();
 
-                // Dates from backend are ISO strings; convert to yyyy-MM-dd
+                isEvaluated = leave.status !== 'PENDING';
+
                 if (leave.startDate) {
-                    const d = new Date(leave.startDate);
-                    startDateInput.value = d.toISOString().slice(0, 10);
+                    startDateInput.value = leave.startDate.slice(0, 10);
                 }
                 if (leave.endDate) {
-                    const d = new Date(leave.endDate);
-                    endDateInput.value = d.toISOString().slice(0, 10);
+                    endDateInput.value = leave.endDate.slice(0, 10);
                 }
 
                 commentInput.value = leave.comment || '';
                 noPointsCheckbox.checked = !leave.usePoints;
+                if (!isEvaluated) {
+                    noPointsCheckbox.dispatchEvent(new Event('change'));
+                }
+
+
+                const managerRow = document.getElementById('managerRow');
+                const managerDisplay = document.getElementById('managerDisplay');
+
+                const managerCommentRow = document.getElementById('managerCommentRow');
+                const managerCommentDisplay = document.getElementById('managerCommentDisplay');
+
+                if (isEvaluated) {
+                    startDateInput.disabled = true;
+                    endDateInput.disabled = true;
+                    commentInput.disabled = true;
+                    noPointsCheckbox.disabled = true;
+                    submitButton.style.display = 'none';
+                    cancelButton.textContent = 'Back';
+                }
+
+                if (managerRow && managerDisplay) {
+                    if (isEvaluated && leave.managerName) {
+                        managerDisplay.textContent = `${leave.managerName} ${leave.managerSurname}`;
+                        managerRow.style.display = 'flex';
+                    } else {
+                        managerRow.style.display = 'none';
+                    }
+                }
+
+                if (managerCommentRow && managerCommentDisplay) {
+                    if (isEvaluated && leave.evaluationComment) {
+                        managerCommentDisplay.textContent = leave.evaluationComment;
+                        managerCommentRow.style.display = 'flex';
+                    } else {
+                        managerCommentRow.style.display = 'none';
+                    }
+                }
 
             } catch (e) {
                 console.error('Error loading leave for edit:', e);
@@ -217,28 +305,49 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         }
 
+
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
+
+            if (isEvaluated) {
+                showError('This leave request has already been evaluated and cannot be changed.');
+                return;
+            }
 
             if (isSubmitting) return;
             isSubmitting = true;
 
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
 
-            if (new Date(startDate) > new Date(endDate)) {
+            if (startDate > endDate) {
                 showError('End date must be after start date');
                 isSubmitting = false;
                 return;
             }
 
-            if (new Date(startDate) > new Date(endDate)) {
-                showError('End date must be after start date');
+           const today = new Date();
+           today.setHours(0, 0, 0, 0);
+           if (endDate < today) {
+                showError('End date cannot be in the past');
                 isSubmitting = false;
                 return;
-            }
+           }
 
-            const days = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+           if (startDate < today) {
+                showError('Start date cannot be in the past');
+                isSubmitting = false;
+                return;
+           }
+
+           if (hasOverlappingRequest(startDate, endDate)) {
+               showError('You already have a leave request during these dates.');
+               isSubmitting = false;
+               return;
+           }
+
+
+            const days = calculateWorkingDays(startDate, endDate);
             const balance = currentUser?.points ?? 0;
 
             if (!noPointsCheckbox.checked && days > balance) {
@@ -248,14 +357,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
 
-
-
             const requestData = {
-                startDate: new Date(startDate).toISOString(),
-                endDate: new Date(endDate).toISOString(),
-                comment: commentInput.value,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
                 usePoints: !noPointsCheckbox.checked
             };
+
+            const evaluationCommentInput = document.getElementById('evaluationCommentInput');
+            if (evaluationCommentInput) {
+                requestData.evaluationComment = evaluationCommentInput.value;
+            }
+
+            const employeeCommentInput = document.getElementById('comment');
+            if (employeeCommentInput) {
+                requestData.employeeComment = employeeCommentInput.value;
+            }
+
 
             const isEdit = !!hiddenIdInput.value;
             const url = isEdit ? `/leaves/${hiddenIdInput.value}` : '/leaves';
@@ -292,9 +409,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
-    // -----------------------------------------------------
-    // LEAVE LIST PAGE
-    // -----------------------------------------------------
     function handleLeavesList() {
         const errorMessage = document.getElementById('error-message');
 
@@ -324,24 +438,25 @@ document.addEventListener('DOMContentLoaded', async function () {
             const owner = isOwner(request);
             const inactive = request.status !== 'PENDING';
 
+            const sameDept =
+                request.employee?.department?.id &&
+                currentUser?.department?.id &&
+                request.employee.department.id === currentUser.department.id;
+
             let buttons = [];
 
-            // -----------------------------
-            // ACTIVE (PENDING) REQUESTS
-            // -----------------------------
             if (!inactive) {
-                // Evaluate
-                if ((isMng || isAdm) && !owner) {
+
+                // Managers/Admins can evaluate requests from their department
+                if ((isMng || isAdm) && !owner && sameDept) {
                     buttons.push(`<button class="btn-evaluate" data-id="${request.id}">Evaluate</button>`);
                 }
 
-                // Edit/Delete for owner
                 if (owner) {
                     buttons.push(`<button class="btn-edit" data-id="${request.id}">Edit</button>`);
                     buttons.push(`<button class="btn-delete" data-id="${request.id}">Delete</button>`);
                 }
 
-                // EMPLOYEE should not see Evaluate
                 if (isEmp && !isMng && !isAdm) {
                     buttons = buttons.filter(b => !b.includes('btn-evaluate'));
                 }
@@ -349,17 +464,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return buttons.join(' ');
             }
 
-            // -----------------------------
-            // INACTIVE (RESOLVED) REQUESTS
-            // -----------------------------
-            // VIEW button rules:
-            const managerEvaluated = request.manager && request.manager.id === currentUser.id;
+            const managerEvaluated =
+                request.manager &&
+                request.manager.id === currentUser.id;
 
-            if (owner || managerEvaluated || isAdm) {
+            if (owner || managerEvaluated || isAdm || (isMng && sameDept)) {
                 buttons.push(`<button class="btn-edit" data-id="${request.id}">View</button>`);
             }
 
-            // DELETE button rules:
             if (isAdm) {
                 buttons.push(`<button class="btn-delete" data-id="${request.id}">Delete</button>`);
             }
@@ -382,6 +494,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         <div class="info-row"><strong>Comment:</strong> ${request.comment || 'No comment'}</div>
                         <div class="info-row"><strong>Employee:</strong> ${request.employee?.name || ''} ${request.employee?.surname || ''}</div>
                         <div class="info-row"><strong>Department:</strong> ${request.employee?.department?.name || 'No department'}</div>
+                        <div class="info-row"><strong>Manager:</strong> ${request.managerName || '—'} ${request.managerSurname || ''}</div>
                     </div>
 
                     <div class="leave-request-actions">
@@ -429,21 +542,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 ? renderRequests(sortedPending, false)
                 : `<div class="no-requests">No pending requests</div>`;
 
-            if (!isEmpOnly) {
+
                 html += `<h3>Other Requests</h3>`;
                 html += sortedOthers.length
                     ? renderRequests(sortedOthers, true)
                     : `<div class="no-requests">No other requests</div>`;
-            }
 
-
-            html += sortedOthers.length
-                ? renderRequests(sortedOthers, true)
-                : `<div class="no-requests">No other requests</div>`;
 
             leaveRequestsList.innerHTML = html;
 
-            // Attach listeners
             leaveRequestsList.querySelectorAll('.btn-evaluate').forEach(button => {
                 button.addEventListener('click', function (e) {
                     e.stopPropagation();
@@ -465,13 +572,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     e.stopPropagation();
                     deleteTargetId = this.dataset.id;
                     openDeleteModal();
-                });
-            });
-
-            leaveRequestsList.querySelectorAll('.leave-request-item').forEach(item => {
-                item.addEventListener('click', function (e) {
-                    // Clicking on empty space of card for managers/admins might navigate to evaluate;
-                    // we keep it simple: only buttons do actions now.
                 });
             });
         }
@@ -512,9 +612,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         async function loadLeaveRequests() {
             try {
-                const response = await fetch('/leaves/all', {
-                    headers: { 'Authorization': 'Bearer ' + getAuthToken() }
+                const response = await fetch('/leaves/all?t=' + Date.now(), {
+                    headers: { 'Authorization': 'Bearer ' + getAuthToken() },
+                    cache: 'no-store'
                 });
+
 
                 if (!response.ok) {
                     showError('Failed to load leave requests');
@@ -532,7 +634,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         }
 
-        // DELETE modal logic
         function openDeleteModal() {
             if (deleteModalOverlay) {
                 deleteModalOverlay.classList.add('visible');
@@ -565,7 +666,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     if (!response.ok) {
                         showError('Failed to delete leave request');
                     } else {
-                        // remove from local list and rerender
                         allLeaveRequests = allLeaveRequests.filter(r => r.id != deleteTargetId);
                         renderAll();
                     }

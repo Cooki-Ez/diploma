@@ -38,7 +38,7 @@ public class EmployeeService {
 
     @Autowired
     public EmployeeService(EmployeeRepository employeeRepository, DepartmentService departmentService, PasswordEncoder passwordEncoder,
-                       ProjectService projectService, ModelMapper modelMapper) {
+                           ProjectService projectService, ModelMapper modelMapper, EmployeeDetailsService employeeDetailsService) {
         this.employeeRepository = employeeRepository;
         this.departmentService = departmentService;
         this.passwordEncoder = passwordEncoder;
@@ -59,9 +59,11 @@ public class EmployeeService {
     }
 
     public Employee getCurrentLoggedInEmployee() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        PersonDetails personDetails = (PersonDetails) authentication.getPrincipal();
-        return personDetails.getEmployee();
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return employeeRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+
     }
 
     public Optional<Employee> findByEmail(String email) {
@@ -118,12 +120,12 @@ public class EmployeeService {
     @Transactional
     public void save(Employee employee, int id) {
         employee.setId(id);
-        
+
         // Encrypt password before saving if it's provided
         if (employee.getPassword() != null && !employee.getPassword().isEmpty()) {
             employee.setPassword(passwordEncoder.encode(employee.getPassword()));
         }
-        
+
         employeeRepository.save(employee);
     }
 

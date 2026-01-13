@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const comment = evaluationComment.value.trim();
         const requestData = {
             status: approved ? 'APPROVED' : 'DECLINED',
-            comment: comment || (approved ? 'Approved!' : 'Rejected!')
+            evaluationComment: comment || (approved ? 'Approved!' : 'Rejected!')
         };
 
         try {
@@ -224,12 +224,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     approveButton.addEventListener('click', () => {
-        evaluationComment.value = 'Approved!';
         evaluateLeaveRequest(true);
     });
 
     rejectButton.addEventListener('click', () => {
-        evaluationComment.value = 'Rejected!';
         evaluateLeaveRequest(false);
     });
 

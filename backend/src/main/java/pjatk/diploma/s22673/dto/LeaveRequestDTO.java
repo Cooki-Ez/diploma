@@ -15,6 +15,8 @@ public class LeaveRequestDTO {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private String comment;
+    private String managerName;
+    private String managerSurname;
     private LeaveRequestStatus status;
     private EmployeeDTO employee;
     private EmployeeDTO evaluatedBy;

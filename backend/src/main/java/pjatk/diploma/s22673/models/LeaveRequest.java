@@ -55,7 +55,7 @@ public class LeaveRequest {
     @JsonIgnore
     private Employee manager;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "leave_evaluation_id", referencedColumnName = "id")
     private LeaveEvaluation leaveEvaluation;
 }

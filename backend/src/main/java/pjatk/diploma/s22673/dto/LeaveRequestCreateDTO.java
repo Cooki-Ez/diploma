@@ -5,22 +5,15 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Setter
 @Getter
 public class LeaveRequestCreateDTO {
-    @NotNull(message = "Please specify start date")
-    private LocalDateTime startDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private Boolean usePoints;
 
-    @NotNull(message = "Please specify end date")
-    private LocalDateTime endDate;
-
-    @Size(max = 255, message = "Comment should be less than 255 characters")
-    private String comment;
-
-    private boolean usePoints = true;
-
-    private Integer employeeId;
+    @Size(max = 255)
+    private String employeeComment;
 }

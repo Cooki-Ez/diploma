@@ -7,6 +7,7 @@ import pjatk.diploma.s22673.models.Employee;
 import pjatk.diploma.s22673.models.LeaveRequest;
 import pjatk.diploma.s22673.models.LeaveRequestStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -22,4 +23,11 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
     List<LeaveRequest> findByEmployeeAndStatusInOrderByEndDateDesc(Employee employee, List<LeaveRequestStatus> statuses);
 
     List<LeaveRequest> findByEmployeeDepartmentAndStatusInOrderByEndDateDesc(Department department, List<LeaveRequestStatus> statuses);
+
+    List<LeaveRequest> findByEmployeeAndStatusInAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+            Employee employee,
+            List<LeaveRequestStatus> statuses,
+            LocalDateTime endDate,
+            LocalDateTime startDate
+    );
 }

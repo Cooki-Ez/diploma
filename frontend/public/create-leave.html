@@ -12,14 +12,13 @@
     <header class="top-bar">
         <div class="company">Unknown Ltd.</div>
         <nav class="nav-tabs">
-            <a href="/employees">Employees</a>
-            <a href="/leaves-view" class="active">Leaves</a>
-            <a href="/admin">Admin</a>
+            <a href="/employees.html">Employees</a>
+            <a href="/leaves-view.html" class="active">Leaves</a>
+            <a href="/admin.html">Admin</a>
         </nav>
         <div class="user">
             <div>
-                <span id="userName">Loading...</span>
-                <br>
+                <span id="userName">Loading...</span><br>
                 <span id="userDepartment" class="user-department">Loading...</span>
             </div>
             <a href="/auth/logout">Logout</a>
@@ -52,6 +51,16 @@
             <div class="row project">
                 <label>Your department:</label>
                 <div id="departmentDisplay" class="project-display">Loading...</div>
+            </div>
+
+            <div class="row project" id="managerRow" style="display: none;">
+                <label>Approved by:</label>
+                <div id="managerDisplay" class="project-display">—</div>
+            </div>
+
+            <div class="row project" id="managerCommentRow" style="display: none;">
+                <label>Manager's comment:</label>
+                <div id="managerCommentDisplay" class="project-display">—</div>
             </div>
 
             <div class="row reasoning">

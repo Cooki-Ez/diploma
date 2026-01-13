@@ -57,6 +57,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(OverlappingLeaveDatesException.class)
+    public ResponseEntity<Object> handleOverlappingLeaveDatesException(
+            OverlappingLeaveDatesException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllUncaughtException(
             Exception ex) {

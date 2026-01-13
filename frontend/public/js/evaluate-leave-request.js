@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
     const leaveRequestId = new URLSearchParams(window.location.search).get('id');
-    const API_BASE_URL = 'http://localhost:8080';
 
     const approveButton = document.getElementById('approveButton');
     const rejectButton = document.getElementById('rejectButton');
@@ -13,31 +12,32 @@ document.addEventListener('DOMContentLoaded', function() {
         return localStorage.getItem('jwt-token');
     }
 
-    setupLogoutButton(API_BASE_URL);
-    loadCurrentUser(API_BASE_URL);
-    loadLeaveRequestDetails(API_BASE_URL);
+    setupLogoutButton();
 
-    async function handleLogout(apiBaseUrl) {
+    async function handleLogout() {
         try {
-            await fetch(`${apiBaseUrl}/auth/logout`, {
+            await fetch('/auth/logout', {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + getAuthToken()
                 }
             });
-        } catch (e) {
-            console.error('Logout error:', e);
+
+            localStorage.removeItem('jwt-token');
+            window.location.href = '/login.html';
+        } catch (error) {
+            console.error('Logout error:', error);
+            localStorage.removeItem('jwt-token');
+            window.location.href = '/login.html';
         }
-        localStorage.removeItem('jwt-token');
-        window.location.href = '/login.html';
     }
 
-    function setupLogoutButton(apiBaseUrl) {
-        const logoutButton = document.getElementById('logoutButton');
+    function setupLogoutButton() {
+        const logoutButton = document.querySelector('a[href="/auth/logout"]');
         if (logoutButton) {
             logoutButton.addEventListener('click', function(e) {
                 e.preventDefault();
-                handleLogout(apiBaseUrl);
+                handleLogout();
             });
         }
     }
@@ -65,33 +65,42 @@ document.addEventListener('DOMContentLoaded', function() {
         const start = new Date(startDate);
         const end = new Date(endDate);
         const diffTime = end.getTime() - start.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) +1;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
         return diffDays > 0 ? diffDays : 0;
     }
 
-    async function loadCurrentUser(apiBaseUrl) {
+    async function loadCurrentUser() {
         try {
-            const response = await fetch(`${apiBaseUrl}/employees/current`, {
+            const response = await fetch('/employees/current', {
                 headers: { 'Authorization': 'Bearer ' + getAuthToken() }
             });
             if (response.ok) {
                 const employee = await response.json();
                 userNameDisplay.textContent = `${employee.name} ${employee.surname}`;
+
+                const userDepartment = document.getElementById('userDepartment');
+                if (userDepartment) {
+                    userDepartment.textContent = employee.department?.name || 'No department';
+                }
             }
         } catch (error) {
             console.error('Error loading current user:', error);
             userNameDisplay.textContent = 'Unknown User';
+            const userDepartment = document.getElementById('userDepartment');
+            if (userDepartment) {
+                userDepartment.textContent = 'No department';
+            }
         }
     }
 
-    async function loadLeaveRequestDetails(apiBaseUrl) {
+    async function loadLeaveRequestDetails() {
         if (!leaveRequestId) {
             showError('Leave request ID is required');
             return;
         }
 
         try {
-            const response = await fetch(`${apiBaseUrl}/leaves/${leaveRequestId}`, {
+            const response = await fetch(`/leaves/${leaveRequestId}`, {
                 headers: { 'Authorization': 'Bearer ' + getAuthToken() }
             });
 
@@ -137,6 +146,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('evaluationCommentRow').style.display = 'flex';
                 }
 
+                if (leaveRequest.employee?.department?.name) {
+                    document.getElementById('detailDepartment').textContent = leaveRequest.employee.department.name;
+                } else {
+                    document.getElementById('detailDepartment').textContent = 'No department';
+                }
+
                 if (leaveRequest.status !== 'PENDING') {
                     evaluationComment.value = leaveRequest.evaluationComment || '';
                     approveButton.disabled = true;
@@ -159,11 +174,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const comment = evaluationComment.value.trim();
         const requestData = {
             status: approved ? 'APPROVED' : 'DECLINED',
-            comment: comment || (approved ? 'Approved!' : 'Rejected!')
+            evaluationComment: comment || (approved ? 'Approved!' : 'Rejected!')
         };
 
         try {
-            const response = await fetch(`${API_BASE_URL}/leaves/${leaveRequestId}`, {
+            const response = await fetch(`/leaves/${leaveRequestId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -177,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showModal();
                 } else {
                     showSuccess('Leave request rejected!');
-                    setTimeout(() => window.location.href = '/leaves.html', 2000);
+                    setTimeout(() => window.location.href = '/leaves-view.html', 2000);
                 }
             } else {
                 const error = await response.json();
@@ -197,24 +212,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         modalOkButton.onclick = () => {
             modalOverlay.classList.remove('visible');
-            window.location.href = '/leaves.html';
+            window.location.href = '/leaves-view.html';
         };
 
         modalOverlay.onclick = (e) => {
             if (e.target === modalOverlay) {
                 modalOverlay.classList.remove('visible');
-                window.location.href = '/leaves.html';
+                window.location.href = '/leaves-view.html';
             }
         };
     }
 
     approveButton.addEventListener('click', () => {
-        evaluationComment.value = 'Approved!';
         evaluateLeaveRequest(true);
     });
 
     rejectButton.addEventListener('click', () => {
-        evaluationComment.value = 'Rejected!';
         evaluateLeaveRequest(false);
     });
+
+    loadCurrentUser();
+    loadLeaveRequestDetails();
 });

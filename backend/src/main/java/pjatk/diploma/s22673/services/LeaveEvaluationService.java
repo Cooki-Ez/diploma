@@ -12,6 +12,7 @@ import pjatk.diploma.s22673.repositories.LeaveRequestRepository;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -73,7 +74,8 @@ public class LeaveEvaluationService {
         leaveEvaluationRepository.deleteById(id);
     }
 
-    @Scheduled(cron = "0 */1 * * * *")
+    @Scheduled(cron = "0 */4 * * * *")
+    @Transactional
     void evaluateRequests() {
         List<LeaveRequest> leaveRequests = leaveRequestService.findByStatus(LeaveRequestStatus.PENDING);
         for (LeaveRequest leaveRequest : leaveRequests) {
@@ -84,13 +86,16 @@ public class LeaveEvaluationService {
                 continue;
             }
 
-            int daysRequested = calculateDays(leaveRequest);
+            int daysRequested = calculateWorkingDays(
+                    leaveRequest.getStartDate().toLocalDate(),
+                    leaveRequest.getEndDate().toLocalDate()
+            );
             Employee employee = leaveRequest.getEmployee();
             if(employee.getPoints() < daysRequested) {
                 leaveRequest.setStatus(LeaveRequestStatus.DECLINED_S);
             } else {
                 LeaveRequestStatus status = evaluateProjectConstraints(employee, leaveRequest);
-                if (status == LeaveRequestStatus.APPROVED) {
+                if (status == LeaveRequestStatus.APPROVED || status == LeaveRequestStatus.APPROVED_S) {
                     employee.setPoints(employee.getPoints() - daysRequested);
                     employeeService.save(employee, employee.getId());
                 }
@@ -110,8 +115,10 @@ public class LeaveEvaluationService {
         leaveEvaluation.setDateOfDecision(new Timestamp(System.currentTimeMillis()));
 
         String comment;
-        if (leaveRequest.getStatus() == LeaveRequestStatus.APPROVED) {
+        if (leaveRequest.getStatus() == LeaveRequestStatus.APPROVED_S) {
             comment = "Auto-approved: Sufficient points and no project constraints";
+        } else if (leaveRequest.getStatus() == LeaveRequestStatus.APPROVED) {
+            comment = "Manually approved";
         } else if (leaveRequest.getStatus() == LeaveRequestStatus.DECLINED_S) {
             comment = "Auto-declined: Insufficient leave points";
         } else if (leaveRequest.getStatus() == LeaveRequestStatus.MANUAL) {
@@ -143,7 +150,7 @@ public class LeaveEvaluationService {
     private LeaveRequestStatus evaluateProjectConstraints(Employee employee, LeaveRequest leaveRequest) {
         List<Project> projects = employee.getProjects();
         if (projects == null || projects.isEmpty()) {
-            return LeaveRequestStatus.APPROVED;
+            return LeaveRequestStatus.APPROVED_S;
         }
 
         LocalDate leaveStart = leaveRequest.getStartDate().toLocalDate();
@@ -173,7 +180,7 @@ public class LeaveEvaluationService {
             }
         }
 
-        return LeaveRequestStatus.APPROVED;
+        return LeaveRequestStatus.APPROVED_S;
     }
 
    /**
@@ -194,7 +201,7 @@ public class LeaveEvaluationService {
                 continue;
 
             for (LeaveRequest lr : empLeaveRequests) {
-                if (lr.getStatus() == LeaveRequestStatus.APPROVED) {
+                if (lr.getStatus() == LeaveRequestStatus.APPROVED || lr.getStatus() == LeaveRequestStatus.APPROVED_S) {
                     LocalDate lrStart = lr.getStartDate().toLocalDate();
                     LocalDate lrEnd = lr.getEndDate().toLocalDate();
 
@@ -214,10 +221,18 @@ public class LeaveEvaluationService {
         return !start1.isAfter(end2) && !start2.isAfter(end1);
     }
 
-    private int calculateDays(LeaveRequest leaveRequest) {
-        LocalDate start = leaveRequest.getStartDate().toLocalDate();
-        LocalDate end = leaveRequest.getEndDate().toLocalDate();
+    public int calculateWorkingDays(LocalDate start, LocalDate end) {
+        int count = 0;
+        LocalDate date = start;
 
-        return (int) ChronoUnit.DAYS.between(start, end) + 1;
+        while (!date.isAfter(end)) {
+            DayOfWeek day = date.getDayOfWeek();
+            if (day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY)
+                count++;
+            date = date.plusDays(1);
+        }
+
+        return count;
     }
+
 }

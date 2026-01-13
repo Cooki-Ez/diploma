@@ -89,7 +89,7 @@
     "email": "employee1@example.com",
     "password": "Password123!",
     "dateOfBirth": "1990-02-10",
-    "points": 0,
+    "points": 10,
     "roles": ["EMPLOYEE"],
     "department": {
       "id": 1,
@@ -112,7 +112,7 @@
     "email": "employee2@example.com",
     "password": "Password123!",
     "dateOfBirth": "1992-05-25",
-    "points": 0,
+    "points": 10,
     "roles": ["EMPLOYEE"],
     "department": {
       "id": 1,
