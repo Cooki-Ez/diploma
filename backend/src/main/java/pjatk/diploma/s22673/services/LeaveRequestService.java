@@ -5,12 +5,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pjatk.diploma.s22673.exceptions.LeaveRequestDoesNotExistException;
 import pjatk.diploma.s22673.exceptions.OverlappingLeaveDatesException;
-import pjatk.diploma.s22673.models.Employee;
-import pjatk.diploma.s22673.models.EmployeeRole;
-import pjatk.diploma.s22673.models.LeaveRequest;
-import pjatk.diploma.s22673.models.LeaveRequestStatus;
+import pjatk.diploma.s22673.models.*;
+import pjatk.diploma.s22673.repositories.LeaveEvaluationRepository;
 import pjatk.diploma.s22673.repositories.LeaveRequestRepository;
+import pjatk.diploma.s22673.util.DateUtils;
 
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -21,6 +21,7 @@ import java.util.List;
 public class LeaveRequestService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeService employeeService;
+    private final LeaveEvaluationRepository leaveEvaluationRepository;
 
     private static final List<LeaveRequestStatus> RESOLVED_STATUSES = Arrays.asList(
             LeaveRequestStatus.APPROVED,
@@ -31,19 +32,10 @@ public class LeaveRequestService {
     );
 
     @Autowired
-    public LeaveRequestService(LeaveRequestRepository leaveRequestRepository, EmployeeService employeeService) {
+    public LeaveRequestService(LeaveRequestRepository leaveRequestRepository, EmployeeService employeeService, LeaveEvaluationRepository leaveEvaluationRepository) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeService = employeeService;
-    }
-
-    private void deductPointsIfRequired(LeaveRequest leaveRequest) {
-        if (leaveRequest.isUsePoints() && leaveRequest.getStartDate() != null && leaveRequest.getEndDate() != null) {
-            long days = Duration.between(leaveRequest.getStartDate(), leaveRequest.getEndDate()).toDays() + 1;
-            Employee employee = leaveRequest.getEmployee();
-            if (employee != null && employee.getPoints() >= days) {
-                employee.setPoints(employee.getPoints() - (int) days);
-            }
-        }
+        this.leaveEvaluationRepository = leaveEvaluationRepository;
     }
 
     private void checkForOverlappingLeaveRequests(LeaveRequest leaveRequest) {
@@ -96,24 +88,98 @@ public class LeaveRequestService {
 
     @Transactional
     public LeaveRequest save(LeaveRequest leaveRequest) {
+
         Employee currentEmployee = employeeService.getCurrentLoggedInEmployee();
         leaveRequest.setEmployee(currentEmployee);
+
         if (leaveRequest.getStatus() == null) {
             leaveRequest.setStatus(LeaveRequestStatus.PENDING);
         }
+
         leaveRequest.setLeaveEvaluation(null);
+
+        // Validate overlaps
         checkForOverlappingLeaveRequests(leaveRequest);
-        deductPointsIfRequired(leaveRequest);
+
+        // Deduct points ONLY if:
+        // - usePoints = true
+        // - request is NEW (no ID yet)
+        // - request is PENDING
+        if (leaveRequest.isUsePoints()
+                && leaveRequest.getId() == 0
+                && leaveRequest.getStatus() == LeaveRequestStatus.PENDING) {
+
+            int workingDays = DateUtils.calculateWorkingDays(
+                    leaveRequest.getStartDate().toLocalDate(),
+                    leaveRequest.getEndDate().toLocalDate()
+            );
+
+            if (currentEmployee.getPoints() < workingDays) {
+
+                leaveRequest.setStatus(LeaveRequestStatus.DECLINED_S);
+
+                LeaveEvaluation evaluation = new LeaveEvaluation();
+                evaluation.setDateOfDecision(new Timestamp(System.currentTimeMillis()));
+                evaluation.setComment(LeaveRequestStatus.DECLINED_S.getSystemComment());
+
+                Employee systemEmployee = employeeService.getSystemEmployee();
+                evaluation.setEmployee(systemEmployee);
+
+                LeaveEvaluation savedEval = leaveEvaluationRepository.save(evaluation);
+
+                leaveRequest.setLeaveEvaluation(savedEval);
+                leaveRequest.setManager(systemEmployee);
+
+                return leaveRequestRepository.save(leaveRequest);
+            }
+
+            currentEmployee.setPoints(currentEmployee.getPoints() - workingDays);
+        }
+
         return leaveRequestRepository.save(leaveRequest);
     }
 
+
+
     @Transactional
-    public LeaveRequest save(LeaveRequest leaveRequest, int id) {
-        leaveRequest.setId(id);
-        checkForOverlappingLeaveRequests(leaveRequest);
-        deductPointsIfRequired(leaveRequest);
-        return leaveRequestRepository.save(leaveRequest);
+    public LeaveRequest save(LeaveRequest updated, int id) {
+        LeaveRequest existing = leaveRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Leave request not found"));
+
+        Employee employee = existing.getEmployee();
+
+        // Only adjust points if the request uses points AND is still pending
+        if (existing.isUsePoints() && existing.getStatus() == LeaveRequestStatus.PENDING) {
+
+            // 1. Refund old points
+            int oldDays = DateUtils.calculateWorkingDays(
+                    existing.getStartDate().toLocalDate(),
+                    existing.getEndDate().toLocalDate()
+            );
+            employee.setPoints(employee.getPoints() + oldDays);
+
+            // 2. Deduct new points
+            int newDays = DateUtils.calculateWorkingDays(
+                    updated.getStartDate().toLocalDate(),
+                    updated.getEndDate().toLocalDate()
+            );
+
+            if (employee.getPoints() < newDays) {
+                throw new IllegalStateException("Not enough points for updated leave dates");
+            }
+
+            employee.setPoints(employee.getPoints() - newDays);
+            employeeService.update(employee);
+        }
+
+        existing.setStartDate(updated.getStartDate());
+        existing.setEndDate(updated.getEndDate());
+        existing.setComment(updated.getComment());
+        existing.setUsePoints(updated.isUsePoints());
+
+        return leaveRequestRepository.save(existing);
     }
+
 
     @Transactional
     public LeaveRequest saveForEmployee(LeaveRequest leaveRequest, int employeeId) {

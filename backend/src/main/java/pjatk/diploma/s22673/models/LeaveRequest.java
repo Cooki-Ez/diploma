@@ -58,6 +58,7 @@ public class LeaveRequest {
     @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "leave_evaluation_id", referencedColumnName = "id")
     private LeaveEvaluation leaveEvaluation;
+
 }
  
 

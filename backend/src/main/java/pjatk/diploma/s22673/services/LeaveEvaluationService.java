@@ -9,6 +9,7 @@ import pjatk.diploma.s22673.models.*;
 import pjatk.diploma.s22673.models.LeaveEvaluation;
 import pjatk.diploma.s22673.repositories.LeaveEvaluationRepository;
 import pjatk.diploma.s22673.repositories.LeaveRequestRepository;
+import pjatk.diploma.s22673.util.DateUtils;
 
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -74,35 +75,28 @@ public class LeaveEvaluationService {
         leaveEvaluationRepository.deleteById(id);
     }
 
-    @Scheduled(cron = "0 */4 * * * *")
+    //@Scheduled(cron = "0 */2 * * * *")
+    @Scheduled(fixedRate = 90_000)
     @Transactional
     void evaluateRequests() {
+
         List<LeaveRequest> leaveRequests = leaveRequestService.findByStatus(LeaveRequestStatus.PENDING);
+
         for (LeaveRequest leaveRequest : leaveRequests) {
-            // Skip requests that don't use points
+
+            Employee employee = leaveRequest.getEmployee();
+
             if (!leaveRequest.isUsePoints()) {
                 leaveRequest.setStatus(LeaveRequestStatus.MANUAL);
+                createSystemEvaluation(leaveRequest);
                 leaveRequestService.save(leaveRequest, leaveRequest.getId());
                 continue;
             }
 
-            int daysRequested = calculateWorkingDays(
-                    leaveRequest.getStartDate().toLocalDate(),
-                    leaveRequest.getEndDate().toLocalDate()
-            );
-            Employee employee = leaveRequest.getEmployee();
-            if(employee.getPoints() < daysRequested) {
-                leaveRequest.setStatus(LeaveRequestStatus.DECLINED_S);
-            } else {
-                LeaveRequestStatus status = evaluateProjectConstraints(employee, leaveRequest);
-                if (status == LeaveRequestStatus.APPROVED || status == LeaveRequestStatus.APPROVED_S) {
-                    employee.setPoints(employee.getPoints() - daysRequested);
-                    employeeService.save(employee, employee.getId());
-                }
-                leaveRequest.setStatus(status);
-            }
+            LeaveRequestStatus status = evaluateProjectConstraints(employee, leaveRequest);
 
-            // Create evaluation with System employee
+            leaveRequest.setStatus(status);
+
             createSystemEvaluation(leaveRequest);
 
             leaveRequestService.save(leaveRequest, leaveRequest.getId());
@@ -114,22 +108,10 @@ public class LeaveEvaluationService {
         LeaveEvaluation leaveEvaluation = new LeaveEvaluation();
         leaveEvaluation.setDateOfDecision(new Timestamp(System.currentTimeMillis()));
 
-        String comment;
-        if (leaveRequest.getStatus() == LeaveRequestStatus.APPROVED_S) {
-            comment = "Auto-approved: Sufficient points and no project constraints";
-        } else if (leaveRequest.getStatus() == LeaveRequestStatus.APPROVED) {
-            comment = "Manually approved";
-        } else if (leaveRequest.getStatus() == LeaveRequestStatus.DECLINED_S) {
-            comment = "Auto-declined: Insufficient leave points";
-        } else if (leaveRequest.getStatus() == LeaveRequestStatus.MANUAL) {
-            comment = "Manual review required: Leave without points or project constraints";
-        } else {
-            comment = "Auto-evaluated: " + leaveRequest.getStatus().toString();
-        }
-        leaveEvaluation.setComment(comment);
+        leaveEvaluation.setComment(leaveRequest.getStatus().getSystemComment());
 
         // Get System employee
-        Employee systemEmployee = getSystemEmployee();
+        Employee systemEmployee = employeeService.getSystemEmployee();
         leaveEvaluation.setEmployee(systemEmployee);
 
         LeaveEvaluation savedEvaluation = leaveEvaluationRepository.save(leaveEvaluation);
@@ -137,10 +119,7 @@ public class LeaveEvaluationService {
         leaveRequest.setManager(systemEmployee);
     }
 
-    private Employee getSystemEmployee() {
-        return employeeService.findByEmail("system@example.com")
-                .orElseThrow(() -> new RuntimeException("System employee not found. Please register system@example.com"));
-    }
+
 
 /**
      * Evaluates project constraints to determine if leave request requires manual review.
@@ -219,20 +198,6 @@ public class LeaveEvaluationService {
 
     private boolean datesOverlap(LocalDate start1, LocalDate end1, LocalDate start2, LocalDate end2) {
         return !start1.isAfter(end2) && !start2.isAfter(end1);
-    }
-
-    public int calculateWorkingDays(LocalDate start, LocalDate end) {
-        int count = 0;
-        LocalDate date = start;
-
-        while (!date.isAfter(end)) {
-            DayOfWeek day = date.getDayOfWeek();
-            if (day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY)
-                count++;
-            date = date.plusDays(1);
-        }
-
-        return count;
     }
 
 }

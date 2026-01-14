@@ -130,6 +130,16 @@ public class EmployeeService {
     }
 
     @Transactional
+    public void update(Employee employee) {
+        employeeRepository.save(employee);
+    }
+
+    Employee getSystemEmployee() {
+        return findByEmail("system@example.com")
+                .orElseThrow(() -> new RuntimeException("System employee not found. Please register system@example.com"));
+    }
+
+    @Transactional
     public void delete(int id) {
         employeeRepository.deleteById(id);
     }
