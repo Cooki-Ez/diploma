@@ -272,7 +272,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const managerCommentRow = document.getElementById('managerCommentRow');
                 const managerCommentDisplay = document.getElementById('managerCommentDisplay');
 
-                if (isEvaluated) {
+                const isAdmin = currentUser?.roles?.includes('ADMIN');
+
+                if (isEvaluated && !isAdmin) {
                     startDateInput.disabled = true;
                     endDateInput.disabled = true;
                     commentInput.disabled = true;
@@ -447,8 +449,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             if (!inactive) {
 
+                if (isAdm && !owner) {
+                    buttons.push(`<button class="btn-evaluate" data-id="${request.id}">Evaluate</button>`);
+                }
+
                 // Managers/Admins can evaluate requests from their department
-                if ((isMng || isAdm) && !owner && sameDept) {
+                if (isMng && !owner && sameDept) {
                     buttons.push(`<button class="btn-evaluate" data-id="${request.id}">Evaluate</button>`);
                 }
 
@@ -461,6 +467,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                     buttons = buttons.filter(b => !b.includes('btn-evaluate'));
                 }
 
+                // Admins can edit/delete any pending request
+                if (isAdm) {
+                    buttons.push(`<button class="btn-edit" data-id="${request.id}">Edit</button>`);
+                    buttons.push(`<button class="btn-delete" data-id="${request.id}">Delete</button>`);
+                }
+
                 return buttons.join(' ');
             }
 
@@ -468,8 +480,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 request.manager &&
                 request.manager.id === currentUser.id;
 
-            if (owner || managerEvaluated || isAdm || (isMng && sameDept)) {
-                buttons.push(`<button class="btn-edit" data-id="${request.id}">View</button>`);
+            if (owner || managerEvaluated || isMng || isAdm) {
+                const label = isAdm && inactive ? 'Edit' : 'View';
+                buttons.push(`<button class="btn-edit" data-id="${request.id}">${label}</button>`);
             }
 
             if (isAdm) {
